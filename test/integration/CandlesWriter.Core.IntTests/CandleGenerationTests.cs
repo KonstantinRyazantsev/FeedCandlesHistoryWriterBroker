@@ -146,7 +146,7 @@ namespace CandlesWriter.Core.IntTests
             ProcessAllQuotes( quotes, repo, logger);
 
             // ... check for no errors
-            Assert.Equal(0, logger.Log.Count());
+            Assert.Equal(0, logger.Log.Where(rec => rec.Severity != LoggerStub.Severity.Info).Count());
 
             // 3. Read candles with repository and check count of generated candles
             //
@@ -221,7 +221,7 @@ namespace CandlesWriter.Core.IntTests
             ProcessAllQuotes(quotes, repo, logger);
 
             // ... check for no errors
-            Assert.Equal(0, logger.Log.Count());
+            Assert.Equal(0, logger.Log.Where(rec => rec.Severity != LoggerStub.Severity.Info).Count());
 
             // 3. Read candles with repository and check count of generated candles
             //
@@ -239,7 +239,7 @@ namespace CandlesWriter.Core.IntTests
             ProcessAllQuotes(quotes2, repo, logger);
 
             // ... check for no errors
-            Assert.Equal(0, logger.Log.Count());
+            Assert.Equal(0, logger.Log.Where(rec => rec.Severity != LoggerStub.Severity.Info).Count());
             
             // 5. Validate merging
             //

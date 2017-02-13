@@ -47,7 +47,8 @@ namespace CandlesWriter.Broker
                   .SetMessageDeserializer(new MessageDeserializer())
                   .SetMessageReadStrategy(new MessageReadWithTemporaryQueueStrategy())
                   .Subscribe(HandleMessage)
-                  .SetLogger(logger);
+                  .SetLogger(logger)
+                  .Start();
 
             this.logger = logger;
 
@@ -84,7 +85,15 @@ namespace CandlesWriter.Broker
 
         private async Task HandleMessage(Quote quote)
         {
-            await this.controller.ConsumeQuote(quote);
+            if (quote != null)
+            {
+                await this.logger.WriteInfoAsync(COMPONENT_NAME, string.Empty, string.Empty, "Received quote: " + quote.ToJson());
+                await this.controller.ConsumeQuote(quote);
+            }
+            else
+            {
+                await this.logger.WriteWarningAsync(COMPONENT_NAME, string.Empty, string.Empty, "Received quote <NULL>.");
+            }
         }
 
         #region "IDisposable implementation"

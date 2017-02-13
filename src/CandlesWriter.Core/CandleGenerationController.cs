@@ -61,6 +61,7 @@ namespace CandlesWriter.Core
             //
             int countQuotes = this.quotesQueue.Count();
             List<Quote> unprocessedQuotes = new List<Quote>(countQuotes);
+
             for (int i = 0; i < countQuotes; i++)
             {
                 Quote quote;
@@ -74,6 +75,8 @@ namespace CandlesWriter.Core
                 }
             }
 
+            await this.logger.WriteInfoAsync(this.componentName, PROCESS, string.Empty,
+                string.Format("Starting quotes processing. Total amount quotes in queue = {0}. Selected {1} quotes.", countQuotes, unprocessedQuotes.Count()));
             await ProcessQuotes(unprocessedQuotes);
         }
 
@@ -103,6 +106,9 @@ namespace CandlesWriter.Core
                     // TODO: Write whole collection
                     foreach (var candle in candles)
                     {
+                        await this.logger.WriteInfoAsync(this.componentName, PROCESS, string.Empty,
+                            string.Format("Writing candle to storage: {0}.", 
+                            $"{{ o:{candle.Open} c:{candle.Close} h:{candle.High} l:{candle.Low} buy:{candle.IsBuy} dt:{candle.DateTime} }}"));
                         await this.candleRepository.InsertOrMergeAsync(candle, assetGroup.Key, interval);
                     }
                 }

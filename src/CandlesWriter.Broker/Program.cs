@@ -7,69 +7,91 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 
 using AzureStorage.Tables;
-using Common.HttpRemoteRequests;
+using Common.Application;
 using Common.Log;
+using Common.HttpRemoteRequests;
 using Lykke.Logs;
-using Lykke.RabbitMqBroker;
 using Lykke.SlackNotification.AzureQueue;
 
 namespace CandlesWriter.Broker
 {
     public class Program
     {
-        private static readonly string COMPONENT = "FeedCandlesHistoryWriterBroker";
-
         public static void Main(string[] args)
         {
-            var serviceCollection = new ServiceCollection();
+            // Initialize logger
             var consoleLog = new LogToConsole();
-            var loggerFanout = new LoggerFanout()
-                .AddLogger("console", consoleLog);
+            var logAggregate = new LogAggregate()
+                .AddLogger(consoleLog);
+            var log = logAggregate.CreateLogger();
 
-            loggerFanout.WriteInfoAsync(COMPONENT, string.Empty, string.Empty, "Loading \"FeedCandlesHistoryWriterBroker\".").Wait();
-            loggerFanout.WriteInfoAsync(COMPONENT, string.Empty, string.Empty, "Reading app settings.").Wait();
-
-            var config = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false)
-                //.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-                .Build();
-
-            string settingsUrl = config.GetValue<string>("settingsUrl");
-
-            loggerFanout.WriteInfoAsync(COMPONENT, string.Empty, string.Empty, "Loading app settings from web-site.").Wait();
-            // Reading app settings from settings web-site
-            HttpRequestClient webClient = new HttpRequestClient();
-            string json = webClient.GetRequest(settingsUrl, "application/json").Result;
-            var appSettings = JsonConvert.DeserializeObject<AppSettings>(json);
-
-            loggerFanout.WriteInfoAsync(COMPONENT, string.Empty, string.Empty, "Initializing azure/slack logger.").Wait();
-            // Initialize slack sender
-            var slackSender = serviceCollection.UseSlackNotificationsSenderViaAzureQueue(appSettings.SlackNotifications.AzureQueue, consoleLog);
-            // Initialize azure logger
-            var azureLog = new LykkeLogToAzureStorage("FeedCandlesHistoryWriterBroker", 
-                new AzureTableStorage<LogEntity>(appSettings.QuotesCandlesHistory.LogsConnectionString, "FeedCandlesHistoryWriterBrokerLogs", consoleLog), 
-                slackSender);
-            loggerFanout.AddLogger("azure", azureLog);
-
-            var mq = appSettings.RabbitMq;
-            RabbitMqSettings subscriberSettings = new RabbitMqSettings()
+            try
             {
-                 ConnectionString = $"amqp://{mq.Username}:{mq.Password}@{mq.Host}:{mq.Port}",
-                 QueueName = mq.QuoteFeed
-            };
+                log.Info("Reading application settings.");
+                var config = new ConfigurationBuilder()
+                    .AddJsonFile("appsettings.json", optional: true)
+                    .AddEnvironmentVariables()
+                    .Build();
 
-            // Start broker
-            loggerFanout.WriteInfoAsync(COMPONENT, string.Empty, string.Empty, "Starting queue subscription.").Wait();
-            Broker broker = new Broker(subscriberSettings, "UseDevelopmentStorage=true;", "CandlesHistory", loggerFanout);
-            //Broker broker = new Broker(subscriberSettings, appSettings.QuotesCandlesHistory.HistoryConnectionString, "CandlesHistory", loggerFanout);
-            broker.Start();
+                var settingsUrl = config.GetValue<string>("BROKER_SETTINGS_URL");
 
-            Console.WriteLine("Press any key...");
-            Console.ReadLine();
+                log.Info("Loading app settings from web-site.");
+                string settingsJson = LoadSettings(settingsUrl);
+                var appSettings = JsonConvert.DeserializeObject<AppSettings>(settingsJson);
 
-            loggerFanout.WriteInfoAsync(COMPONENT, string.Empty, string.Empty, "Stopping broker.").Wait();
-            broker.Stop();
-            loggerFanout.WriteInfoAsync(COMPONENT, string.Empty, string.Empty, "Brokker is stopped.").Wait();
+                log.Info("Initializing azure/slack logger.");
+                var services = new ServiceCollection(); // only used for azure logger
+                logAggregate.ConfigureAzureLogger(services, Startup.ApplicationName, appSettings);
+
+                log = logAggregate.CreateLogger();
+
+                // After log is configured
+                //
+                log.Info("Creating Startup.");
+                var startup = new Startup(settingsJson, log);
+
+                log.Info("Configure startup services.");
+                startup.ConfigureServices(Application.Instance.ContainerBuilder, log);
+
+                log.Info("Starting application.");
+                var scope = Application.Instance.Start();
+
+                log.Info("Configure startup.");
+                startup.Configure(scope);
+
+                log.Info("Running application.");
+                Application.Instance.Run();
+
+                log.Info("Exit application.");
+            }
+            catch (Exception ex)
+            {
+                log.WriteErrorAsync("Program", string.Empty, string.Empty, ex).Wait();
+            }
+        }
+
+        private static string LoadSettings(string url)
+        {
+            HttpRequestClient webClient = new HttpRequestClient();
+            return webClient.GetRequest(url, "application/json").Result;
+        }
+    }
+
+    internal static class LogExtensions
+    {
+        public static void ConfigureAzureLogger(this LogAggregate logAggregate, IServiceCollection services, string appName, AppSettings appSettings)
+        {
+            var log = logAggregate.CreateLogger();
+            var slackSender = services.UseSlackNotificationsSenderViaAzureQueue(appSettings.SlackNotifications.AzureQueue, log);
+            var azureLog = new LykkeLogToAzureStorage(appName,
+                new AzureTableStorage<LogEntity>(appSettings.ApplicationLogs.AzureConnectionString, appName + "Logs", log),
+                slackSender);
+            logAggregate.AddLogger(azureLog);
+        }
+
+        public static void Info(this ILog log, string info)
+        {
+            log.WriteInfoAsync("FeedCandlesHistoryWriterBroker", "Program", string.Empty, info).Wait();
         }
     }
 }

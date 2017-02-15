@@ -13,7 +13,7 @@
     "xunit": "2.1.0",
     "dotnet-test-xunit": "1.0.0-rc2-build10025",
     "Lykke.Domain.Prices": "0.1.0",
-    "Lykke.Common": "1.1.5",
+    "Lykke.Common": "1.1.15",
     "CandlesWriter.Core": "0.1.0-*"
   },
 

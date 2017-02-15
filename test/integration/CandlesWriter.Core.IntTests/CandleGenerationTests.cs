@@ -18,13 +18,6 @@ namespace CandlesWriter.Core.IntTests
 {
     public class CandleGenerationTests
     {
-        private readonly string connectionString = "UseDevelopmentStorage=true;";
-        private readonly string historyTableName = "CandleHistory";
-
-        public CandleGenerationTests()
-        {
-        }
-
         [Fact(Skip ="Only appliable when storage is persistant over recreating. For example, local storage emulator.")]
         public void RepositorySupportsLegacyRows()
         {
@@ -262,7 +255,7 @@ namespace CandlesWriter.Core.IntTests
         private INoSQLTableStorage<T> CreateStorage<T>() where T : class, ITableEntity, new()
         {
             //ILog logger = new LoggerStub();
-            //return new AzureTableStorage<T>(this.connectionString, this.historyTableName, logger);
+            //return new AzureTableStorage<T>("UseDevelopmentStorage=true;", "CandleHistory", logger);
             return new NoSqlTableInMemory<T>();
         }
 

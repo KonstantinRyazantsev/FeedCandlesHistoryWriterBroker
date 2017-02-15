@@ -3,14 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using AzureStorage.Tables;
 using Common;
+using Common.Abstractions;
 using Common.Log;
 using Lykke.Domain.Prices.Contracts;
-using Lykke.Domain.Prices.AzureProvider.History;
-using Lykke.Domain.Prices.AzureProvider.History.Model;
 using Lykke.Domain.Prices.Model;
-using Lykke.RabbitMqBroker;
 using Lykke.RabbitMqBroker.Subscriber;
 
 using CandlesWriter.Broker.Serialization;
@@ -18,12 +15,7 @@ using CandlesWriter.Core;
 
 namespace CandlesWriter.Broker
 {
-    public interface IStartable
-    {
-        void Start();
-    }
-
-    public class Broker: TimerPeriod, IStartable, IStopable, IDisposable
+    public class Broker: TimerPeriod, IPersistent
     {
         private readonly static string COMPONENT_NAME = "FeedCandlesHistoryWriterBroker";
         private readonly static string PROCESS = "Broker";
@@ -32,55 +24,22 @@ namespace CandlesWriter.Broker
         private CandleGenerationController controller;
         private ILog logger;
 
-        private bool isStarted = false;
-        private bool isDisposed = false;
-
         public Broker(
-            RabbitMqSettings rabitMqSubscriberSettings,
-            string historyTableConnectionString,
-            string historyTableName,
+            RabbitMqSubscriber<Quote> subscriber,
+            ICandleHistoryRepository repo,
             ILog logger)
             : base("BrokerCandlesWriter", (int)TimeSpan.FromMinutes(1).TotalMilliseconds, logger)
         {
-            this.subscriber =
-                new RabbitMqSubscriber<Quote>(rabitMqSubscriberSettings)
+            this.logger = logger;
+            this.subscriber = subscriber;
+
+            subscriber
                   .SetMessageDeserializer(new MessageDeserializer())
                   .SetMessageReadStrategy(new MessageReadWithTemporaryQueueStrategy())
                   .Subscribe(HandleMessage)
-                  .SetLogger(logger)
-                  .Start();
+                  .SetLogger(logger);
 
-            this.logger = logger;
-
-            ICandleHistoryRepository candleRepository = new CandleHistoryRepository(
-                new AzureTableStorage<CandleTableEntity>(historyTableConnectionString, historyTableName, logger));
-
-            this.controller = new CandleGenerationController(candleRepository, logger, COMPONENT_NAME);
-        }
-
-        public override async Task Execute()
-        {
-            await this.controller.Tick();
-        }
-
-        void IStartable.Start()
-        {
-            EnsureNotDisposed();
-            if (!this.isStarted)
-            {
-                this.subscriber.Start();
-                this.isStarted = true;
-            }
-        }
-
-        void IStopable.Stop()
-        {
-            EnsureNotDisposed();
-            if (this.isStarted)
-            {
-                this.subscriber.Stop();
-                this.isStarted = false;
-            }
+            this.controller = new CandleGenerationController(repo, logger, COMPONENT_NAME);
         }
 
         private async Task HandleMessage(Quote quote)
@@ -96,34 +55,15 @@ namespace CandlesWriter.Broker
             }
         }
 
-        #region "IDisposable implementation"
-        public void Dispose()
+        public override async Task Execute()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        ~Broker()
-        {
-            Dispose(false);
+            await this.controller.Tick();
         }
 
-        private void Dispose(bool disposing)
+        public async Task Save()
         {
-            if (disposing)
-            {
-                // get rid of managed resources
-            }
-            // get rid of unmanaged resources
-            this.isDisposed = true;
+            // Persist all remaining intervals
+            await this.controller.Tick();
         }
-
-        private void EnsureNotDisposed()
-        {
-            if (this.isDisposed)
-            {
-                this.logger.WriteErrorAsync(COMPONENT_NAME, PROCESS, "", new InvalidOperationException("Disposed object Broker has been called"), DateTime.Now);
-            }
-        }
-        #endregion
     }
 }

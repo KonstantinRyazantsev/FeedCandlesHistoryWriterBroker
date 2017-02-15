@@ -18,7 +18,6 @@ namespace CandlesWriter.Broker
     public class Broker: TimerPeriod, IPersistent
     {
         private readonly static string COMPONENT_NAME = "FeedCandlesHistoryWriterBroker";
-        private readonly static string PROCESS = "Broker";
 
         private RabbitMqSubscriber<Quote> subscriber;
         private CandleGenerationController controller;
@@ -46,7 +45,6 @@ namespace CandlesWriter.Broker
         {
             if (quote != null)
             {
-                await this.logger.WriteInfoAsync(COMPONENT_NAME, string.Empty, string.Empty, "Received quote: " + quote.ToJson());
                 await this.controller.ConsumeQuote(quote);
             }
             else

@@ -30,7 +30,8 @@ namespace CandlesWriter.Broker
 
         public void ConfigureServices(ContainerBuilder builder, ILog log)
         {
-            var mq = settings.RabbitMq;
+            var appSettings = settings.FeedCandlesHistoryWriterBroker;
+            var mq = appSettings.RabbitMq;
             RabbitMqSettings subscriberSettings = new RabbitMqSettings()
             {
                 ConnectionString = $"amqp://{mq.Username}:{mq.Password}@{mq.Host}:{mq.Port}",
@@ -40,7 +41,7 @@ namespace CandlesWriter.Broker
             var subscriber = new RabbitMqSubscriber<Quote>(subscriberSettings);
             var repo = new CandleHistoryRepository(
                 new AzureTableStorage<CandleTableEntity>(
-                    settings.QuotesCandlesHistory.HistoryConnectionString, //"UseDevelopmentStorage=true;"
+                    appSettings.ConnectionStrings.HistoryConnectionString, //"UseDevelopmentStorage=true;"
                     "CandlesHistory", log));
 
             var broker = new Broker(subscriber, repo, log);

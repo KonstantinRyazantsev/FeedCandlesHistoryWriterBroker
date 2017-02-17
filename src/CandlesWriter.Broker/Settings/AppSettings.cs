@@ -10,10 +10,13 @@ namespace CandlesWriter.Broker
     internal class AppSettings
     {
         public SlackNotificationsSettings SlackNotifications { get; set; } = new SlackNotificationsSettings();
-        public ApplicationLogsSettings ApplicationLogs { get; set; } = new ApplicationLogsSettings();
+        public FeedCandlesHistoryWriterBrokerSettings FeedCandlesHistoryWriterBroker { get; set; } = new FeedCandlesHistoryWriterBrokerSettings();
 
-        public RabbitMqSettings RabbitMq { get; set; } = new RabbitMqSettings();
-        public QuotesCandlesHistorySettings QuotesCandlesHistory { get; set; } = new QuotesCandlesHistorySettings();
+        public class FeedCandlesHistoryWriterBrokerSettings
+        {
+            public RabbitMqSettings RabbitMq { get; set; } = new RabbitMqSettings();
+            public ConnectionStringsSettings ConnectionStrings { get; set; } = new ConnectionStringsSettings();
+        }
 
         public class RabbitMqSettings
         {
@@ -26,7 +29,8 @@ namespace CandlesWriter.Broker
             public string QuoteFeed { get; set; }
         }
 
-        public class QuotesCandlesHistorySettings
+
+        public class ConnectionStringsSettings
         {
             public string HistoryConnectionString { get; set; }
             public string LogsConnectionString { get; set; }
@@ -35,11 +39,6 @@ namespace CandlesWriter.Broker
         public class SlackNotificationsSettings
         {
             public AzureQueueSettings AzureQueue { get; set; } = new AzureQueueSettings();
-        }
-
-        public class ApplicationLogsSettings
-        {
-            public string AzureConnectionString { get; set; }
         }
     }
 }

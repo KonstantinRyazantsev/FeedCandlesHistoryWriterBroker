@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0-*",
+  "version": "1.0.0-*",
   "buildOptions": {
     "copyToOutput": {
       "include": [
@@ -28,7 +28,9 @@
     "Microsoft.Extensions.Configuration.EnvironmentVariables": "1.1.0",
     "Microsoft.Extensions.Configuration.Json": "1.1.0",
     "Microsoft.Extensions.DependencyInjection": "1.1.0",
-    "CandlesWriter.Core": "0.1.0-*"
+    "CandlesWriter.Core": {
+      "target": "project" 
+    }
   },
 
   "frameworks": {

@@ -18,8 +18,8 @@
       "version": "1.1.0"
     },
     "Lykke.AzureStorage": "1.2.6",
-    "Lykke.Common": "1.1.15",
-    "Lykke.Logs": "1.0.6",
+    "Lykke.Common": "1.1.21",
+    "Lykke.Logs": "1.0.10",
     "Lykke.RabbitMqBroker": "1.0.43",
     "Lykke.SlackNotifications": "1.0.10",
     "Lykke.SlackNotification.AzureQueue": "1.0.4",
@@ -29,7 +29,7 @@
     "Microsoft.Extensions.Configuration.Json": "1.1.0",
     "Microsoft.Extensions.DependencyInjection": "1.1.0",
     "CandlesWriter.Core": {
-      "target": "project" 
+      "target": "project"
     }
   },
 

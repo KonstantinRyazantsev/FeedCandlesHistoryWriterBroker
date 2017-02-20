@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Log;
@@ -29,6 +30,11 @@ namespace CandlesWriter.Core
         private readonly ILog logger;
         private readonly string componentName;
         private readonly ConcurrentQueue<Quote> quotesQueue = new ConcurrentQueue<Quote>();
+
+        /// <summary>Last time service logs were made</summary>
+        private DateTime lastServiceLogTime = DateTime.MinValue;
+        /// <summary>Average write duration</summary>
+        private TimeSpan avgWriteSpan = TimeSpan.Zero;
 
         public CandleGenerationController(ICandleHistoryRepository candleRepository, ILog logger, string componentName = "")
         {
@@ -85,28 +91,42 @@ namespace CandlesWriter.Core
                 return;
             }
 
-            CandleGenerator candleGenerator = new CandleGenerator();
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
 
             // Group quotes by asset
             var assetGroups = from q in unprocessedQuotes
                          group q by q.AssetPair into assetGroup
                          select assetGroup;
 
+            var tasks = new List<Task>();
             foreach (var assetGroup in assetGroups)
             {
-                foreach (var interval in REQUIRED_INTERVALS)
-                {
-                    // For each asset and interval generate candles from quotes and write them to storage.
-                    //
-                    IEnumerable<Quote> quotes = assetGroup;
-                    IEnumerable<ICandle> candles = candleGenerator.Generate(quotes, interval);
+                tasks.Add(ProcessQuotesForAsset(assetGroup, assetGroup.Key));
+            }
+            await Task.WhenAll(tasks);
 
-                    // TODO: Write whole collection
-                    foreach (var candle in candles)
-                    {
-                        await this.candleRepository.InsertOrMergeAsync(candle, assetGroup.Key, interval);
-                    }
-                }
+            // Update average write time and log service information
+            //
+            watch.Stop();
+            this.avgWriteSpan = new TimeSpan((this.avgWriteSpan.Ticks + watch.Elapsed.Ticks) / 2);
+            if (DateTime.UtcNow - this.lastServiceLogTime > TimeSpan.FromHours(1))
+            {
+                await this.logger.WriteInfoAsync(this.componentName, PROCESS, string.Empty, string.Format("Average write time: {0}", this.avgWriteSpan));
+                this.lastServiceLogTime = DateTime.UtcNow;
+            }
+        }
+
+        private async Task ProcessQuotesForAsset(IEnumerable<Quote> quotes, string asset)
+        {
+            CandleGenerator candleGenerator = new CandleGenerator();
+
+            foreach (var interval in REQUIRED_INTERVALS)
+            {
+                // For each asset and interval generate candles from quotes and write them to storage.
+                //
+                IEnumerable<ICandle> candles = candleGenerator.Generate(quotes, interval);
+                await this.candleRepository.InsertOrMergeAsync(candles, asset, interval);
             }
         }
 

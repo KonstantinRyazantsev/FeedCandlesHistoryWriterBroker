@@ -23,6 +23,14 @@ namespace CandlesWriter.Core.Tests.Stub
             throw new NotImplementedException();
         }
 
+        public async Task InsertOrMergeAsync(IEnumerable<ICandle> candles, string asset, TimeInterval interval)
+        {
+            foreach(var candle in candles)
+            {
+                await this.InsertOrMergeAsync(candle, asset, interval);
+            }
+        }
+
         public Task InsertOrMergeAsync(ICandle candle, string asset, TimeInterval interval)
         {
             this.storage.Add(new StoreItem()

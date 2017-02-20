@@ -19,9 +19,39 @@ namespace Lykke.Domain.Prices.AzureProvider.History
             _tableStorage = tableStorage;
         }
 
+        public async Task InsertOrMergeAsync(IEnumerable<ICandle> candles, string asset, TimeInterval interval)
+        {
+            // Group by row
+            var groups = candles
+                .GroupBy(candle => new { pKey = candle.PartitionKey(asset, interval), rowKey = candle.RowKey(interval) });
+
+            // Update rows
+            foreach(var group in groups)
+            {
+                await InsertOrMergeAsync(group, group.Key.pKey, group.Key.rowKey, interval);
+            }
+        }
+
+        private async Task InsertOrMergeAsync(IEnumerable<ICandle> candles, string partitionKey, string rowKey, TimeInterval interval)
+        {
+            // Read row
+            CandleTableEntity entity = await _tableStorage.GetDataAsync(partitionKey, rowKey);
+            if (entity == null)
+            {
+                entity = new CandleTableEntity(partitionKey, rowKey);
+            }
+
+            // Merge all candles
+            entity.MergeCandles(candles, interval);
+
+            // Update
+            await _tableStorage.InsertOrMergeAsync(entity);
+        }
+
+
         public async Task InsertOrMergeAsync(ICandle candle, string asset, TimeInterval interval)
         {
-            // 1. Get candle table entity
+            // Get candle table entity
             string partitionKey = CandleTableEntity.GeneratePartitionKey(asset, candle.IsBuy, interval);
             string rowKey = CandleTableEntity.GenerateRowKey(candle.DateTime, interval);
 
@@ -32,27 +62,10 @@ namespace Lykke.Domain.Prices.AzureProvider.History
                 entity = new CandleTableEntity(partitionKey, rowKey);
             }
 
-            // 2. Check if candle with specified time already exist
-            // 3. If found - merge, else - add to list
-            var tick = candle.DateTime.GetIntervalTick(interval);
-            var existingCandle = entity.Candles.FirstOrDefault(ci => ci.Tick == tick);
+            // Merge candle
+            entity.MergeCandle(candle, interval);
 
-            if (existingCandle != null)
-            {
-                // Merge in list
-                var mergedCandle = existingCandle
-                    .ToCandle(entity.IsBuy, entity.DateTime, interval)
-                    .MergeWith(candle);
-
-                entity.Candles.Remove(existingCandle);
-                entity.Candles.Add(mergedCandle.ToItem(interval));
-            }
-            else
-            {
-                // Add to list
-                entity.Candles.Add(candle.ToItem(interval));
-            }
-
+            // Update
             await _tableStorage.InsertOrMergeAsync(entity);
         }
 

@@ -39,5 +39,64 @@ namespace Lykke.Domain.Prices.AzureProvider.History.Model
                  Tick = candle.DateTime.GetIntervalTick(interval)
             };
         }
+
+        public static string PartitionKey(this ICandle candle, string asset, TimeInterval interval)
+        {
+            if (candle == null)
+            {
+                throw new ArgumentNullException(nameof(candle));
+            }
+            return CandleTableEntity.GeneratePartitionKey(asset, candle.IsBuy, interval);
+        }
+
+        public static string RowKey(this ICandle candle, TimeInterval interval)
+        {
+            if (candle == null)
+            {
+                throw new ArgumentNullException(nameof(candle));
+            }
+            return CandleTableEntity.GenerateRowKey(candle.DateTime, interval);
+        }
+    }
+
+    internal static class CandleTableEntityExtensions
+    {
+        public static void MergeCandles(this CandleTableEntity entity, IEnumerable<ICandle> candles, TimeInterval interval)
+        {
+            foreach(var candle in candles)
+            {
+                entity.MergeCandle(candle, interval);
+            }
+        }
+
+        public static void MergeCandle(this CandleTableEntity entity, ICandle candle, TimeInterval interval)
+        {
+            if (entity == null)
+            {
+                throw new ArgumentNullException(nameof(entity));
+            }
+
+            // 1. Check if candle with specified time already exist
+            // 2. If found - merge, else - add to list
+            //
+            var tick = candle.DateTime.GetIntervalTick(interval);
+            var existingCandle = entity.Candles.FirstOrDefault(ci => ci.Tick == tick);
+
+            if (existingCandle != null)
+            {
+                // Merge in list
+                var mergedCandle = existingCandle
+                    .ToCandle(entity.IsBuy, entity.DateTime, interval)
+                    .MergeWith(candle);
+
+                entity.Candles.Remove(existingCandle);
+                entity.Candles.Add(mergedCandle.ToItem(interval));
+            }
+            else
+            {
+                // Add to list
+                entity.Candles.Add(candle.ToItem(interval));
+            }
+        }
     }
 }

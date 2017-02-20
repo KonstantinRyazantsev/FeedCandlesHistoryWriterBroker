@@ -76,6 +76,52 @@ namespace Lykke.Domain.Prices.AzureProvider.History.Model
             }
         }
 
+        #region "Back compatibility properties"
+
+        public double High
+        {
+            get
+            {
+                if (this.Candles != null && this.Candles.Count > 0)
+                {
+                    return this.Candles.Select(c => c.High).Max();
+                }
+                return 0;
+            }
+        }
+
+        public double Low
+        {
+            get
+            {
+                if (this.Candles != null && this.Candles.Count > 0)
+                {
+                    return this.Candles.Select(c => c.Low).Min();
+                }
+                return 0;
+            }
+        }
+
+        public double Open
+        {
+            get
+            {
+                return (this.Candles?.FirstOrDefault()?.Open) ?? 0;
+            }
+        }
+
+        public double Close
+        {
+            get
+            {
+                return (this.Candles?.LastOrDefault()?.Close) ?? 0;
+            }
+        }
+
+        public int Time { get { return 0; } }
+
+        #endregion
+
         public List<CandleItem> Candles { get; set; } = new List<CandleItem>();
 
         public void ReadEntity(IDictionary<string, EntityProperty> properties, OperationContext operationContext)
@@ -100,6 +146,16 @@ namespace Lykke.Domain.Prices.AzureProvider.History.Model
 
             var dict = new Dictionary<string, EntityProperty>();
             dict.Add("Data", new EntityProperty(json));
+
+            // For back compatibility
+            dict.Add("DateTime", new EntityProperty(this.DateTime));
+            dict.Add("IsBuy", new EntityProperty(this.IsBuy));
+            dict.Add("Open", new EntityProperty(this.Open));
+            dict.Add("Close", new EntityProperty(this.Close));
+            dict.Add("High", new EntityProperty(this.High));
+            dict.Add("Low", new EntityProperty(this.Low));
+            dict.Add("Time", new EntityProperty(this.Time));
+
             return dict;
         }
 
@@ -144,106 +200,4 @@ namespace Lykke.Domain.Prices.AzureProvider.History.Model
                 kind);
         }
     }
-
-    //public class CandleTableEntity : TableEntity //, ICandle
-    //{
-    //    public CandleTableEntity()
-    //    {
-    //    }
-
-    //    public CandleTableEntity(string partitionKey, string rowKey)
-    //        : base(partitionKey, rowKey)
-    //    {
-    //    }
-
-    //    public string Data
-    //    {
-    //        get
-    //        {
-    //            // serialize candles
-    //            return JsonConvert.SerializeObject(this.Candles);
-    //        }
-    //        set
-    //        {
-    //            // deserialize candles
-    //            this.Candles.Clear();
-    //            if (!string.IsNullOrEmpty(value))
-    //            {
-    //                this.Candles.AddRange(JsonConvert.DeserializeObject<List<CandleItem>>(value));
-    //            }
-    //        }
-    //    }
-
-    //    //public double Open { get; set; }
-    //    //public double Close { get; set; }
-    //    //public double High { get; set; }
-    //    //public double Low { get; set; }
-    //    public DateTime DateTime
-    //    {
-    //        get
-    //        {
-    //            // extract from RowKey + Interval from PKey
-    //            if (!string.IsNullOrEmpty(this.PartitionKey))
-    //            {
-
-    //            }
-    //            return default(DateTime);
-    //        }
-    //    }
-
-    //    public string Asset
-    //    {
-    //        get
-    //        {
-    //            // extract from PartitionKey
-    //            if (!string.IsNullOrEmpty(this.PartitionKey))
-    //            {
-
-    //            }
-    //            return string.Empty;
-    //        }
-
-    //    }
-    //    public bool IsBuy
-    //    {
-    //        get
-    //        {
-    //            // extract from Partition key
-    //            if (!string.IsNullOrEmpty(this.PartitionKey))
-    //            {
-
-    //            }
-    //            return false;
-    //        }
-    //        set
-    //        {
-    //            // Ignore
-    //        }
-    //    }
-
-    //    public List<CandleItem> Candles { get; set; } = new List<CandleItem>();
-    //    //public int Time { get; set; }
-
-    //    public static string GeneratePartitionKey(string assetPairId, bool isBuy, TimeInterval interval)
-    //    {
-    //        return $"{assetPairId}_{(isBuy ? "BUY" : "SELL")}_{interval}";
-    //    }
-
-    //    public static string GenerateRowKey(DateTime date, TimeInterval interval)
-    //    {
-    //        switch (interval)
-    //        {
-    //            case TimeInterval.Month: return $"{date.Year}";
-    //            case TimeInterval.Day: return $"{date.Year}-{date.Month:00}";
-    //            case TimeInterval.Hour: return $"{date.Year}-{date.Month:00}-{date.Day:00}";
-    //            case TimeInterval.Min30:
-    //            case TimeInterval.Min15:
-    //            case TimeInterval.Min5:
-    //            case TimeInterval.Minute: return $"{date.Year}-{date.Month:00}-{date.Day:00}T{date.Hour:00}";
-    //            case TimeInterval.Sec: return $"{date.Year}-{date.Month:00}-{date.Day:00}T{date.Hour:00}:{date.Minute:00}";
-    //            default:
-    //                throw new ArgumentOutOfRangeException(nameof(interval), interval, null);
-    //        }
-    //    }
-    //}
 }

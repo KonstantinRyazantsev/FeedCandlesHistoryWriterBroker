@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Lykke.Domain.Prices;
 using Lykke.Domain.Prices.Contracts;
+using Lykke.Domain.Prices.Repositories;
 
 namespace CandlesWriter.Core.Tests.Stub
 {
@@ -13,17 +14,17 @@ namespace CandlesWriter.Core.Tests.Stub
 
         public IReadOnlyList<StoreItem> Stored { get { return this.storage; } }
 
-        public Task<ICandle> GetCandleAsync(string asset, TimeInterval interval, bool isBuy, DateTime dateTime)
+        public Task<IFeedCandle> GetCandleAsync(string asset, TimeInterval interval, bool isBuy, DateTime dateTime)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<ICandle>> GetCandlesAsync(string asset, TimeInterval interval, bool isBuy, DateTime from, DateTime to)
+        public Task<IEnumerable<IFeedCandle>> GetCandlesAsync(string asset, TimeInterval interval, bool isBuy, DateTime from, DateTime to)
         {
             throw new NotImplementedException();
         }
 
-        public async Task InsertOrMergeAsync(IEnumerable<ICandle> candles, string asset, TimeInterval interval)
+        public async Task InsertOrMergeAsync(IEnumerable<IFeedCandle> candles, string asset, TimeInterval interval)
         {
             foreach(var candle in candles)
             {
@@ -31,7 +32,7 @@ namespace CandlesWriter.Core.Tests.Stub
             }
         }
 
-        public Task InsertOrMergeAsync(ICandle candle, string asset, TimeInterval interval)
+        public Task InsertOrMergeAsync(IFeedCandle candle, string asset, TimeInterval interval)
         {
             this.storage.Add(new StoreItem()
             {
@@ -44,7 +45,7 @@ namespace CandlesWriter.Core.Tests.Stub
 
         public struct StoreItem
         {
-            public ICandle candle;
+            public IFeedCandle candle;
             public string asset;
             public TimeInterval interval;
         }

@@ -11,10 +11,10 @@ namespace CandlesWriter.Broker
     {
         public SlackNotificationsSettings SlackNotifications { get; set; } = new SlackNotificationsSettings();
         public FeedCandlesHistoryWriterBrokerSettings FeedCandlesHistoryWriterBroker { get; set; } = new FeedCandlesHistoryWriterBrokerSettings();
+        public RabbitMqSettings RabbitMq { get; set; } = new RabbitMqSettings();
 
         public class FeedCandlesHistoryWriterBrokerSettings
         {
-            public RabbitMqSettings RabbitMq { get; set; } = new RabbitMqSettings();
             public ConnectionStringsSettings ConnectionStrings { get; set; } = new ConnectionStringsSettings();
         }
 
@@ -25,10 +25,8 @@ namespace CandlesWriter.Broker
             public string Username { get; set; }
             public string Password { get; set; }
             public string ExchangeOrderbook { get; set; }
-            [JsonProperty("QuteFeed")]
             public string QuoteFeed { get; set; }
         }
-
 
         public class ConnectionStringsSettings
         {

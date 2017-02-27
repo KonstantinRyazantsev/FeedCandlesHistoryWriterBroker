@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AzureStorage;
 using Lykke.Domain.Prices;
 using Lykke.Domain.Prices.Contracts;
+using Lykke.Domain.Prices.Repositories;
 using Lykke.Domain.Prices.AzureProvider.History.Model;
 
 namespace Lykke.Domain.Prices.AzureProvider.History
@@ -19,7 +20,7 @@ namespace Lykke.Domain.Prices.AzureProvider.History
             _tableStorage = tableStorage;
         }
 
-        public async Task InsertOrMergeAsync(IEnumerable<ICandle> candles, string asset, TimeInterval interval)
+        public async Task InsertOrMergeAsync(IEnumerable<IFeedCandle> candles, string asset, TimeInterval interval)
         {
             // Group by row
             var groups = candles
@@ -32,7 +33,7 @@ namespace Lykke.Domain.Prices.AzureProvider.History
             }
         }
 
-        private async Task InsertOrMergeAsync(IEnumerable<ICandle> candles, string partitionKey, string rowKey, TimeInterval interval)
+        private async Task InsertOrMergeAsync(IEnumerable<IFeedCandle> candles, string partitionKey, string rowKey, TimeInterval interval)
         {
             // Read row
             CandleTableEntity entity = await _tableStorage.GetDataAsync(partitionKey, rowKey);
@@ -49,7 +50,7 @@ namespace Lykke.Domain.Prices.AzureProvider.History
         }
 
 
-        public async Task InsertOrMergeAsync(ICandle candle, string asset, TimeInterval interval)
+        public async Task InsertOrMergeAsync(IFeedCandle candle, string asset, TimeInterval interval)
         {
             // Get candle table entity
             string partitionKey = CandleTableEntity.GeneratePartitionKey(asset, candle.IsBuy, interval);
@@ -69,7 +70,7 @@ namespace Lykke.Domain.Prices.AzureProvider.History
             await _tableStorage.InsertOrMergeAsync(entity);
         }
 
-        public async Task<ICandle> GetCandleAsync(string asset, TimeInterval interval, bool isBuy, DateTime dateTime)
+        public async Task<IFeedCandle> GetCandleAsync(string asset, TimeInterval interval, bool isBuy, DateTime dateTime)
         {
             // 1. Get candle table entity
             string partitionKey = CandleTableEntity.GeneratePartitionKey(asset, isBuy, interval);
@@ -87,7 +88,7 @@ namespace Lykke.Domain.Prices.AzureProvider.History
             return null;
         }
 
-        public async Task<IEnumerable<ICandle>> GetCandlesAsync(string asset, TimeInterval interval, bool isBuy, DateTime from, DateTime to)
+        public async Task<IEnumerable<IFeedCandle>> GetCandlesAsync(string asset, TimeInterval interval, bool isBuy, DateTime from, DateTime to)
         {
             string partitionKey = CandleTableEntity.GeneratePartitionKey(asset, isBuy, interval);
 

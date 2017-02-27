@@ -10,9 +10,9 @@ namespace CandlesWriter.Core
 {
     public sealed class CandleGenerator
     {
-        public IEnumerable<ICandle> Generate(IEnumerable<Quote> quotes, TimeInterval interval)
+        public IEnumerable<IFeedCandle> Generate(IEnumerable<Quote> quotes, TimeInterval interval)
         {
-            List<ICandle> result = new List<ICandle>();
+            List<IFeedCandle> result = new List<IFeedCandle>();
 
             if (quotes != null && quotes.Any())
             {
@@ -26,9 +26,9 @@ namespace CandlesWriter.Core
             return result;
         }
 
-        private IEnumerable<ICandle> ConvertToCandles(IEnumerable<Quote> quotes, TimeInterval interval)
+        private IEnumerable<IFeedCandle> ConvertToCandles(IEnumerable<Quote> quotes, TimeInterval interval)
         {
-            IEnumerable<ICandle> candles = 
+            IEnumerable<IFeedCandle> candles = 
                 quotes
                 .GroupBy(quote => quote.Timestamp.RoundTo(interval))
                 .Select(group => group.ToCandle(group.Key));

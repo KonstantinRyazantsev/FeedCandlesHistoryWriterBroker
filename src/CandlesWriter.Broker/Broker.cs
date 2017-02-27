@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Common;
 using Common.Abstractions;
 using Common.Log;
-using Lykke.Domain.Prices.Contracts;
+using Lykke.Domain.Prices.Repositories;
 using Lykke.Domain.Prices.Model;
 using Lykke.RabbitMqBroker.Subscriber;
 

@@ -12,13 +12,14 @@ using Lykke.Domain.Prices.Model;
 using Lykke.Domain.Prices.AzureProvider.History;
 using Lykke.Domain.Prices.AzureProvider.History.Model;
 using Lykke.Domain.Prices.Contracts;
+using Lykke.Domain.Prices.Repositories;
 using CandlesWriter.Core.IntTests.Stub;
 
 namespace CandlesWriter.Core.IntTests
 {
     public class CandleGenerationTests
     {
-        [Fact(Skip ="Only appliable when storage is persistant over recreating. For example, local storage emulator.")]
+        [Fact(Skip = "Only appliable when storage is persistant over recreating. For example, local storage emulator.")]
         public void RepositorySupportsLegacyRows()
         {
             // Create record with legacy row
@@ -48,7 +49,7 @@ namespace CandlesWriter.Core.IntTests
             var candles = repo.GetCandlesAsync("BTCCHF", TimeInterval.Hour, true, dt.AddDays(-1), dt.AddDays(1)).Result.ToArray();
 
             Assert.Equal(3, candles.Length);
-            Assert.True(candles[0].Equals(new Candle()
+            Assert.True(candles[0].IsEqual(new FeedCandle()
             {
                 Open = 740.508,
                 Close = 741.843,
@@ -57,7 +58,7 @@ namespace CandlesWriter.Core.IntTests
                 IsBuy = true,
                 DateTime = new DateTime(2016, 11, 30, 0, 0, 0, DateTimeKind.Utc)
             }));
-            Assert.True(candles[1].Equals(new Candle()
+            Assert.True(candles[1].IsEqual(new FeedCandle()
             {
                 Open = 741.865,
                 Close = 741.785,
@@ -66,7 +67,7 @@ namespace CandlesWriter.Core.IntTests
                 IsBuy = true,
                 DateTime = new DateTime(2016, 11, 30, 1, 0, 0, DateTimeKind.Utc)
             }));
-            Assert.True(candles[2].Equals(new Candle()
+            Assert.True(candles[2].IsEqual(new FeedCandle()
             {
                 Open = 753.497,
                 Close = 755.11,
@@ -80,9 +81,9 @@ namespace CandlesWriter.Core.IntTests
 
             #region "Read created row with new repository's GetCandle method"
 
-            ICandle candle1 = repo.GetCandleAsync("BTCCHF", TimeInterval.Hour, true, dt).Result;
+            IFeedCandle candle1 = repo.GetCandleAsync("BTCCHF", TimeInterval.Hour, true, dt).Result;
             Assert.NotNull(candle1);
-            Assert.True(candle1.Equals(new Candle()
+            Assert.True(candle1.IsEqual(new FeedCandle()
             {
                 Open = 740.508,
                 Close = 741.843,
@@ -92,9 +93,9 @@ namespace CandlesWriter.Core.IntTests
                 DateTime = new DateTime(2016, 11, 30, 0, 0, 0, DateTimeKind.Utc)
             }));
 
-            ICandle candle2 = repo.GetCandleAsync("BTCCHF", TimeInterval.Hour, true, dt.AddHours(1)).Result;
+            IFeedCandle candle2 = repo.GetCandleAsync("BTCCHF", TimeInterval.Hour, true, dt.AddHours(1)).Result;
             Assert.NotNull(candle2);
-            Assert.True(candle2.Equals(new Candle()
+            Assert.True(candle2.IsEqual(new FeedCandle()
             {
                 Open = 741.865,
                 Close = 741.785,
@@ -239,15 +240,15 @@ namespace CandlesWriter.Core.IntTests
             var candles = repo.GetCandlesAsync(asset, TimeInterval.Sec, true, dt.AddDays(-1), dt.AddDays(1)).Result.ToArray();
             Assert.Equal(2, candles.Length);
             // ! Low value is from the first quote
-            Assert.True(candles[0].Equals(new Candle() { Open = 102, Close = 102, High = 102, Low = 101, IsBuy = true, DateTime = dt }));
-            Assert.True(candles[1].Equals(new Candle() { Open = 103, Close = 103, High = 103, Low = 103, IsBuy = true, DateTime = dt.AddSeconds(1) }));
+            Assert.True(candles[0].IsEqual(new FeedCandle() { Open = 102, Close = 102, High = 102, Low = 101, IsBuy = true, DateTime = dt }));
+            Assert.True(candles[1].IsEqual(new FeedCandle() { Open = 103, Close = 103, High = 103, Low = 103, IsBuy = true, DateTime = dt.AddSeconds(1) }));
         }
 
         private void CheckCountGenerated(ICandleHistoryRepository repo, DateTime from, DateTime to, dynamic[] requirements)
         {
             foreach(var req in requirements)
             {
-                IEnumerable<ICandle> candles = repo.GetCandlesAsync(req.Asset, req.Interval, req.IsBuy, from, to).Result;
+                IEnumerable<IFeedCandle> candles = repo.GetCandlesAsync(req.Asset, req.Interval, req.IsBuy, from, to).Result;
                 Assert.Equal(req.CountExpected, candles.Count());
             }
         }
@@ -255,7 +256,7 @@ namespace CandlesWriter.Core.IntTests
         private INoSQLTableStorage<T> CreateStorage<T>() where T : class, ITableEntity, new()
         {
             //ILog logger = new LoggerStub();
-            //return new AzureTableStorage<T>("UseDevelopmentStorage=true;", "CandleHistory", logger);
+            //return new AzureTableStorage<T>("UseDevelopmentStorage=true;", "CandlesHistory", logger);
             return new NoSqlTableInMemory<T>();
         }
 
@@ -273,6 +274,23 @@ namespace CandlesWriter.Core.IntTests
 
             // ... signal controller to process quotes
             controller.Tick().Wait();
+        }
+    }
+
+    internal static class CandleExtensions
+    {
+        public static bool IsEqual(this IFeedCandle candle, IFeedCandle other)
+        {
+            if (other != null && candle != null)
+            {
+                return candle.DateTime == other.DateTime
+                    && candle.Open == other.Open
+                    && candle.Close == other.Close
+                    && candle.High == other.High
+                    && candle.Low == other.Low
+                    && candle.IsBuy == other.IsBuy;
+            }
+            return false;
         }
     }
 }

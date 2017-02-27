@@ -8,6 +8,7 @@ using Common.Log;
 using Lykke.Domain.Prices;
 using Lykke.Domain.Prices.Model;
 using Lykke.Domain.Prices.Contracts;
+using Lykke.Domain.Prices.Repositories;
 
 namespace CandlesWriter.Core
 {
@@ -125,7 +126,7 @@ namespace CandlesWriter.Core
             {
                 // For each asset and interval generate candles from quotes and write them to storage.
                 //
-                IEnumerable<ICandle> candles = candleGenerator.Generate(quotes, interval);
+                IEnumerable<IFeedCandle> candles = candleGenerator.Generate(quotes, interval);
                 await this.candleRepository.InsertOrMergeAsync(candles, asset, interval);
             }
         }

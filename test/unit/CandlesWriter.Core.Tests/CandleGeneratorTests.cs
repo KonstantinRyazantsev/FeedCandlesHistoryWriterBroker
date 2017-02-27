@@ -4,6 +4,7 @@ using System.Linq;
 using Xunit;
 using Lykke.Domain.Prices;
 using Lykke.Domain.Prices.Model;
+using Lykke.Domain.Prices.Contracts;
 
 namespace CandlesWriter.Core.Tests
 {
@@ -108,9 +109,26 @@ namespace CandlesWriter.Core.Tests
             var candles = new CandleGenerator().Generate(quotes, TimeInterval.Sec).ToArray();
 
             Assert.Equal(3, candles.Length);
-            Assert.True(candles[0].Equals(new Candle() { Open = 1, Close = 2, High = 2, Low = 1, IsBuy = true, DateTime = dt }));
-            Assert.True(candles[1].Equals(new Candle() { Open = 3, Close = 3, High = 3, Low = 3, IsBuy = true, DateTime = dt.AddSeconds(5) }));
-            Assert.True(candles[2].Equals(new Candle() { Open = 4, Close = 6, High = 6, Low = 4, IsBuy = true, DateTime = dt.AddSeconds(15) }));
+            Assert.True(candles[0].IsEqual(new FeedCandle() { Open = 1, Close = 2, High = 2, Low = 1, IsBuy = true, DateTime = dt }));
+            Assert.True(candles[1].IsEqual(new FeedCandle() { Open = 3, Close = 3, High = 3, Low = 3, IsBuy = true, DateTime = dt.AddSeconds(5) }));
+            Assert.True(candles[2].IsEqual(new FeedCandle() { Open = 4, Close = 6, High = 6, Low = 4, IsBuy = true, DateTime = dt.AddSeconds(15) }));
+        }
+    }
+
+    internal static class CandleExtensions
+    {
+        public static bool IsEqual(this IFeedCandle candle, IFeedCandle other)
+        {
+            if (other != null && candle != null)
+            {
+                return candle.DateTime == other.DateTime
+                    && candle.Open == other.Open
+                    && candle.Close == other.Close
+                    && candle.High == other.High
+                    && candle.Low == other.Low
+                    && candle.IsBuy == other.IsBuy;
+            }
+            return false;
         }
     }
 }

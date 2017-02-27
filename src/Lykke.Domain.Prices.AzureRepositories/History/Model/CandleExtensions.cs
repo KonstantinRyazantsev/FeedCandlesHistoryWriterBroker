@@ -9,11 +9,11 @@ namespace Lykke.Domain.Prices.AzureProvider.History.Model
 {
     internal static class CandleItemExtensions
     {
-        public static ICandle ToCandle(this CandleItem candle, bool isBuy, DateTime baseTime, TimeInterval interval)
+        public static IFeedCandle ToCandle(this CandleItem candle, bool isBuy, DateTime baseTime, TimeInterval interval)
         {
             if (candle != null)
             {
-                return new Prices.Model.Candle() {
+                return new Prices.Model.FeedCandle() {
                      Open = candle.Open,
                      Close = candle.Close,
                      High = candle.High,
@@ -28,7 +28,7 @@ namespace Lykke.Domain.Prices.AzureProvider.History.Model
 
     internal static class CandleExtensions
     {
-        public static CandleItem ToItem(this ICandle candle, TimeInterval interval)
+        public static CandleItem ToItem(this IFeedCandle candle, TimeInterval interval)
         {
             return new CandleItem()
             {
@@ -40,7 +40,7 @@ namespace Lykke.Domain.Prices.AzureProvider.History.Model
             };
         }
 
-        public static string PartitionKey(this ICandle candle, string asset, TimeInterval interval)
+        public static string PartitionKey(this IFeedCandle candle, string asset, TimeInterval interval)
         {
             if (candle == null)
             {
@@ -49,7 +49,7 @@ namespace Lykke.Domain.Prices.AzureProvider.History.Model
             return CandleTableEntity.GeneratePartitionKey(asset, candle.IsBuy, interval);
         }
 
-        public static string RowKey(this ICandle candle, TimeInterval interval)
+        public static string RowKey(this IFeedCandle candle, TimeInterval interval)
         {
             if (candle == null)
             {
@@ -61,7 +61,7 @@ namespace Lykke.Domain.Prices.AzureProvider.History.Model
 
     internal static class CandleTableEntityExtensions
     {
-        public static void MergeCandles(this CandleTableEntity entity, IEnumerable<ICandle> candles, TimeInterval interval)
+        public static void MergeCandles(this CandleTableEntity entity, IEnumerable<IFeedCandle> candles, TimeInterval interval)
         {
             foreach(var candle in candles)
             {
@@ -69,7 +69,7 @@ namespace Lykke.Domain.Prices.AzureProvider.History.Model
             }
         }
 
-        public static void MergeCandle(this CandleTableEntity entity, ICandle candle, TimeInterval interval)
+        public static void MergeCandle(this CandleTableEntity entity, IFeedCandle candle, TimeInterval interval)
         {
             if (entity == null)
             {

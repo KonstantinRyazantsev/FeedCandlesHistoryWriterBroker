@@ -176,7 +176,7 @@ namespace CandlesWriter.Core
             //
             watch.Stop();
             this.avgWriteSpan = new TimeSpan((this.avgWriteSpan.Ticks + watch.Elapsed.Ticks) / 2);
-            if (DateTime.UtcNow - this.lastServiceLogTime > TimeSpan.FromMinutes(1))
+            if (DateTime.UtcNow - this.lastServiceLogTime > TimeSpan.FromHours(1))
             {
                 await this.logger.WriteInfoAsync(this.componentName, PROCESS, string.Empty, string.Format("Average write time: {0}", this.avgWriteSpan));
                 this.lastServiceLogTime = DateTime.UtcNow;

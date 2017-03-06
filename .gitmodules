@@ -1,0 +1,3 @@
+[submodule "submodules/azurerepositories.candles"]
+	path = submodules/azurerepositories.candles
+	url = https://bitbucket.org/lykkewalletteam/azurerepositories.candles

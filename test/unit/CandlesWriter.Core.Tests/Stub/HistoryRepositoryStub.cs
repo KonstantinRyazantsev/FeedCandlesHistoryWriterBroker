@@ -24,6 +24,11 @@ namespace CandlesWriter.Core.Tests.Stub
             throw new NotImplementedException();
         }
 
+        public Task InsertOrMergeAsync(IReadOnlyDictionary<TimeInterval, IEnumerable<IFeedCandle>> candles, string asset)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task InsertOrMergeAsync(IEnumerable<IFeedCandle> candles, string asset, TimeInterval interval)
         {
             foreach(var candle in candles)

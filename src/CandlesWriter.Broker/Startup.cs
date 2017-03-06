@@ -6,20 +6,21 @@ using Autofac;
 using Newtonsoft.Json;
 
 using AzureStorage.Tables;
+using AzureRepositories.Candles;
 using Common;
 using Common.Abstractions;
 using Common.Log;
 using Lykke.Domain.Prices.Model;
-using Lykke.Domain.Prices.AzureProvider.History;
-using Lykke.Domain.Prices.AzureProvider.History.Model;
 using Lykke.RabbitMqBroker;
 using Lykke.RabbitMqBroker.Subscriber;
+using Lykke.Domain.Prices.Repositories;
 
 namespace CandlesWriter.Broker
 {
     internal class Startup
     {
         private AppSettings settings;
+        private Broker broker = null;
 
         public static string ApplicationName { get { return "FeedCandlesHistoryWriterBroker"; } }
 
@@ -38,18 +39,19 @@ namespace CandlesWriter.Broker
             };
 
             var subscriber = new RabbitMqSubscriber<Quote>(subscriberSettings);
-            var repo = new CandleHistoryRepository(
-                new AzureTableStorage<CandleTableEntity>(
-                    settings.FeedCandlesHistoryWriterBroker.ConnectionStrings.HistoryConnectionString, //"UseDevelopmentStorage=true;"
-                    "CandlesHistory", log));
+            this.broker = new Broker(subscriber, log);
 
-            var broker = new Broker(subscriber, repo, log);
+            builder.Register(c => new CandleHistoryRepository(
+                new AzureTableStorage<CandleTableEntity>(
+                        settings.FeedCandlesHistoryWriterBroker.ConnectionStrings.HistoryConnectionString,
+                        "CandlesHistory", log)
+                )).As<ICandleHistoryRepository>();
 
             builder.RegisterInstance(subscriber)
                 .As<IStartable>()
                 .As<IStopable>();
-
-            builder.RegisterInstance(broker)
+            
+            builder.RegisterInstance(this.broker)
                 .As<IStartable>()
                 .As<IStopable>()
                 .As<IPersistent>();
@@ -57,6 +59,7 @@ namespace CandlesWriter.Broker
 
         public void Configure(ILifetimeScope scope)
         {
+            this.broker.Scope = scope;
         }
     }
 }

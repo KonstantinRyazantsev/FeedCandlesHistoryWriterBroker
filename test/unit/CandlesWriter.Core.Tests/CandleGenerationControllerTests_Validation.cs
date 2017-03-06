@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
-using Lykke.Domain.Prices;
 using CandlesWriter.Core.Tests.Stub;
 using System.Threading;
 using Lykke.Domain.Prices.Model;

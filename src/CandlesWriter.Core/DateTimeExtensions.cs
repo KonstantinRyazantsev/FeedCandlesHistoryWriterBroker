@@ -14,7 +14,14 @@ namespace CandlesWriter.Core
             switch (interval)
             {
                 case TimeInterval.Month: return new DateTime(dateTime.Year, dateTime.Month, 1, 0, 0, 0, dateTime.Kind);
+                case TimeInterval.Week:
+                    int diff = dateTime.DayOfWeek - DayOfWeek.Monday;
+                    var dt = dateTime.AddDays(diff == -1 ? -6 : -diff); // shifting to monday
+                    return new DateTime(dt.Year, dt.Month, dt.Day, 0, 0, 0, dateTime.Kind);
                 case TimeInterval.Day: return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, 0, 0, 0, dateTime.Kind);
+                case TimeInterval.Hour12: return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, (dateTime.Hour / 12) * 12, 0, 0, dateTime.Kind);
+                case TimeInterval.Hour6: return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, (dateTime.Hour / 6) * 6, 0, 0, dateTime.Kind);
+                case TimeInterval.Hour4: return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, (dateTime.Hour / 4) * 4, 0, 0, dateTime.Kind);
                 case TimeInterval.Hour: return DateTime.SpecifyKind(dateTime.RoundToHour(), dateTime.Kind);
                 case TimeInterval.Min30: return DateTime.SpecifyKind(dateTime.RoundToMinute(30), dateTime.Kind);
                 case TimeInterval.Min15: return DateTime.SpecifyKind(dateTime.RoundToMinute(15), dateTime.Kind);

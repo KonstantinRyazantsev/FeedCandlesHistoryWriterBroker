@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace CandlesWriter.Core.IntTests.Stub
 {
-    // TODO: Remove code duplication
+    // TODO: Use LogToMemory instead
     public class LoggerStub : Common.Log.ILog
     {
         private List<LogRecord> log = new List<LogRecord>();

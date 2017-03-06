@@ -4,28 +4,28 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage.Table;
 using Xunit;
+using AzureRepositories.Candles;
 using AzureStorage;
 using AzureStorage.Tables;
-using Common.Log;
 using Lykke.Domain.Prices;
 using Lykke.Domain.Prices.Model;
-using Lykke.Domain.Prices.AzureProvider.History;
-using Lykke.Domain.Prices.AzureProvider.History.Model;
 using Lykke.Domain.Prices.Contracts;
 using Lykke.Domain.Prices.Repositories;
 using CandlesWriter.Core.IntTests.Stub;
+using Common.Log;
 
 namespace CandlesWriter.Core.IntTests
 {
     public class CandleGenerationTests
     {
-        [Fact(Skip = "Only appliable when storage is persistant over recreating. For example, local storage emulator.")]
+        [Fact]
         public void RepositorySupportsLegacyRows()
         {
             // Create record with legacy row
             //
+            var logger = new LoggerStub();
             DateTime dt = new DateTime(2016, 11, 30, 0, 0, 0, DateTimeKind.Utc);
-            var storage = CreateStorage<Legacy.FeedCandleEntity>();
+            var storage = CreateStorage<Legacy.FeedCandleEntity>(logger);
 
             var entity = new Legacy.FeedCandleEntity()
             {
@@ -45,65 +45,22 @@ namespace CandlesWriter.Core.IntTests
 
             #region "Read created row with new repository's GetCandles method"
 
-            var repo = new CandleHistoryRepository(CreateStorage<CandleTableEntity>());
+            var repo = new CandleHistoryRepository(CreateStorage<CandleTableEntity>(logger, clear: false));
             var candles = repo.GetCandlesAsync("BTCCHF", TimeInterval.Hour, true, dt.AddDays(-1), dt.AddDays(1)).Result.ToArray();
 
-            Assert.Equal(3, candles.Length);
-            Assert.True(candles[0].IsEqual(new FeedCandle()
-            {
-                Open = 740.508,
-                Close = 741.843,
-                High = 742.596,
-                Low = 738.679,
-                IsBuy = true,
-                DateTime = new DateTime(2016, 11, 30, 0, 0, 0, DateTimeKind.Utc)
-            }));
-            Assert.True(candles[1].IsEqual(new FeedCandle()
-            {
-                Open = 741.865,
-                Close = 741.785,
-                High = 742.731,
-                Low = 740.709,
-                IsBuy = true,
-                DateTime = new DateTime(2016, 11, 30, 1, 0, 0, DateTimeKind.Utc)
-            }));
-            Assert.True(candles[2].IsEqual(new FeedCandle()
-            {
-                Open = 753.497,
-                Close = 755.11,
-                High = 755.491,
-                Low = 753.486,
-                IsBuy = true,
-                DateTime = new DateTime(2016, 11, 30, 23, 0, 0, DateTimeKind.Utc)
-            }));
+            // Does not read data, and does not throw exceptions.
+            Assert.Equal(0, candles.Length);
 
             #endregion
 
             #region "Read created row with new repository's GetCandle method"
 
             IFeedCandle candle1 = repo.GetCandleAsync("BTCCHF", TimeInterval.Hour, true, dt).Result;
-            Assert.NotNull(candle1);
-            Assert.True(candle1.IsEqual(new FeedCandle()
-            {
-                Open = 740.508,
-                Close = 741.843,
-                High = 742.596,
-                Low = 738.679,
-                IsBuy = true,
-                DateTime = new DateTime(2016, 11, 30, 0, 0, 0, DateTimeKind.Utc)
-            }));
+            // Does not read data, and does not throw exceptions.
+            Assert.Null(candle1);
 
             IFeedCandle candle2 = repo.GetCandleAsync("BTCCHF", TimeInterval.Hour, true, dt.AddHours(1)).Result;
-            Assert.NotNull(candle2);
-            Assert.True(candle2.IsEqual(new FeedCandle()
-            {
-                Open = 741.865,
-                Close = 741.785,
-                High = 742.731,
-                Low = 740.709,
-                IsBuy = true,
-                DateTime = new DateTime(2016, 11, 30, 1, 0, 0, DateTimeKind.Utc)
-            }));
+            Assert.Null(candle2);
 
             #endregion
         }
@@ -112,7 +69,7 @@ namespace CandlesWriter.Core.IntTests
         public void QuotesSortedByAssetAndBuy()
         {
             var logger = new LoggerStub();
-            var storage = CreateStorage<CandleTableEntity>();
+            var storage = CreateStorage<CandleTableEntity>(logger);
             var repo = new CandleHistoryRepository(storage);
 
             DateTime dt = new DateTime(2017, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -197,7 +154,7 @@ namespace CandlesWriter.Core.IntTests
         public void CandlesAreInsertedAndMerged()
         {
             var logger = new LoggerStub();
-            var storage = CreateStorage<CandleTableEntity>();
+            var storage = CreateStorage<CandleTableEntity>(logger);
             var repo = new CandleHistoryRepository(storage);
 
             DateTime dt = new DateTime(2017, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -253,11 +210,28 @@ namespace CandlesWriter.Core.IntTests
             }
         }
 
-        private INoSQLTableStorage<T> CreateStorage<T>() where T : class, ITableEntity, new()
+        private INoSQLTableStorage<T> CreateStorage<T>(ILog logger, bool clear = true) where T : class, ITableEntity, new()
         {
-            //ILog logger = new LoggerStub();
-            //return new AzureTableStorage<T>("UseDevelopmentStorage=true;", "CandlesHistory", logger);
-            return new NoSqlTableInMemory<T>();
+            var table = new AzureTableStorage<T>("UseDevelopmentStorage=true;", "CandlesHistoryTest", logger);
+            if (clear)
+            {
+                ClearTable(table);
+            }
+            return table;
+
+            // NoSqlTableInMemory does not implement ScanDataAsync method
+            //return new NoSqlTableInMemory<T>();
+        }
+
+        private static void ClearTable<T>(AzureTableStorage<T> table) where T : class, ITableEntity, new()
+        {
+            var entities = new List<T>();
+            do
+            {
+                entities.Clear();
+                table.GetDataByChunksAsync(collection => entities.AddRange(collection)).Wait();
+                entities.ForEach(e => table.DeleteAsync(e).Wait());
+            } while (entities.Count > 0);
         }
 
         private static void ProcessAllQuotes(IEnumerable<Quote> quotes, ICandleHistoryRepository repo, LoggerStub logger)

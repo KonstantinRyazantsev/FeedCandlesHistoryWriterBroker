@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-*",
+  "version": "1.1.0-*",
   "buildOptions": {
     "copyToOutput": {
       "include": [
@@ -17,7 +17,7 @@
       "type": "platform",
       "version": "1.1.0"
     },
-    "Lykke.AzureStorage": "1.2.6",
+    "Lykke.AzureStorage": "1.2.7",
     "Lykke.Common": "1.1.21",
     "Lykke.Logs": "1.0.10",
     "Lykke.RabbitMqBroker": "1.0.43",

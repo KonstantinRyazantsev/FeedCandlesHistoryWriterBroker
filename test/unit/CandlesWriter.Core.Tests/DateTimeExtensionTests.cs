@@ -16,8 +16,8 @@ namespace CandlesWriter.Core.Tests
         [Fact]
         public void TestsAreCoveringAllIntervals()
         {
-            // Tests are written for TimeInterval with 9 values
-            Assert.Equal(9, Enum.GetValues(typeof(TimeInterval)).Cast<int>().Count());
+            // Tests are written for TimeInterval with 13 values
+            Assert.Equal(13, Enum.GetValues(typeof(TimeInterval)).Cast<int>().Count());
         }
 
         [Fact]
@@ -49,9 +49,37 @@ namespace CandlesWriter.Core.Tests
             // Hour
             Assert.Equal(new DateTime(2017, 2, 8, 11, 0, 0),
                          new DateTime(2017, 2, 8, 11, 50, 13, 111).RoundTo(TimeInterval.Hour));
+            // Hour4
+            Assert.Equal(new DateTime(2017, 2, 8, 8, 0, 0),
+                         new DateTime(2017, 2, 8, 11, 50, 13, 111).RoundTo(TimeInterval.Hour4));
+            Assert.Equal(new DateTime(2017, 2, 8, 0, 0, 0),
+                         new DateTime(2017, 2, 8, 1, 50, 13, 111).RoundTo(TimeInterval.Hour4));
+            // Hour6
+            Assert.Equal(new DateTime(2017, 2, 8, 6, 0, 0),
+                         new DateTime(2017, 2, 8, 11, 50, 13, 111).RoundTo(TimeInterval.Hour6));
+            Assert.Equal(new DateTime(2017, 2, 8, 18, 0, 0),
+                         new DateTime(2017, 2, 8, 23, 50, 13, 111).RoundTo(TimeInterval.Hour6));
+            // Hour12
+            Assert.Equal(new DateTime(2017, 2, 8, 0, 0, 0),
+                         new DateTime(2017, 2, 8, 11, 50, 13, 111).RoundTo(TimeInterval.Hour12));
+            Assert.Equal(new DateTime(2017, 2, 8, 12, 0, 0),
+                         new DateTime(2017, 2, 8, 21, 50, 13, 111).RoundTo(TimeInterval.Hour12));
             // Day
             Assert.Equal(new DateTime(2017, 2, 8, 0, 0, 0),
                          new DateTime(2017, 2, 8, 11, 50, 13, 111).RoundTo(TimeInterval.Day));
+            // Week
+            Assert.Equal(new DateTime(2016, 12, 19, 0, 0, 0),
+                         new DateTime(2016, 12, 25, 11, 50, 13, 111).RoundTo(TimeInterval.Week));
+            Assert.Equal(new DateTime(2016, 12, 26, 0, 0, 0),
+                         new DateTime(2016, 12, 26, 11, 50, 13, 111).RoundTo(TimeInterval.Week));
+            Assert.Equal(new DateTime(2016, 12, 26, 0, 0, 0),
+                         new DateTime(2017, 1, 1, 11, 50, 13, 111).RoundTo(TimeInterval.Week));
+            Assert.Equal(new DateTime(2017, 1, 2, 0, 0, 0),
+                         new DateTime(2017, 1, 2, 11, 50, 13, 111).RoundTo(TimeInterval.Week));
+            Assert.Equal(new DateTime(2017, 1, 2, 0, 0, 0),
+                         new DateTime(2017, 1, 3, 11, 50, 13, 111).RoundTo(TimeInterval.Week));
+            Assert.Equal(new DateTime(2017, 1, 30, 0, 0, 0),
+                         new DateTime(2017, 2, 1, 11, 50, 13, 111).RoundTo(TimeInterval.Week));
             // Month
             Assert.Equal(new DateTime(2017, 2, 1, 0, 0, 0),
                          new DateTime(2017, 2, 8, 11, 50, 13, 111).RoundTo(TimeInterval.Month));

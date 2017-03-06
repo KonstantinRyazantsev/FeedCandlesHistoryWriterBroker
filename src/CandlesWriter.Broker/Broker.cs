@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Autofac;
 
 using Common;
 using Common.Abstractions;
@@ -23,9 +24,22 @@ namespace CandlesWriter.Broker
         private CandleGenerationController controller;
         private ILog logger;
 
+        private ILifetimeScope scope;
+        public ILifetimeScope Scope
+        {
+            get
+            {
+                return this.scope;
+            }
+            set
+            {
+                this.scope = value;
+                this.controller.Scope = scope;
+            }
+        }
+
         public Broker(
             RabbitMqSubscriber<Quote> subscriber,
-            ICandleHistoryRepository repo,
             ILog logger)
             : base("BrokerCandlesWriter", (int)TimeSpan.FromMinutes(1).TotalMilliseconds, logger)
         {
@@ -38,7 +52,7 @@ namespace CandlesWriter.Broker
                   .Subscribe(HandleMessage)
                   .SetLogger(logger);
 
-            this.controller = new CandleGenerationController(repo, logger, COMPONENT_NAME);
+            this.controller = new CandleGenerationController(logger, COMPONENT_NAME);
         }
 
         private async Task HandleMessage(Quote quote)

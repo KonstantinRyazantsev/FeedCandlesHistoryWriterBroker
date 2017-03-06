@@ -7,6 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{0397A305-9A2
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D7FF148A-D2EE-4CAC-98A4-86914C178448}"
 	ProjectSection(SolutionItems) = preProject
+		.gitmodules = .gitmodules
 		DOCKERFILE = DOCKERFILE
 		global.json = global.json
 	EndProjectSection
@@ -15,19 +16,19 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "CandlesWriter.Broker", "src
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "CandlesWriter.Core", "src\CandlesWriter.Core\CandlesWriter.Core.xproj", "{7E64AFE5-FB0E-499F-831D-7106C720D330}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Lykke.Domain.Prices.AzureRepositories", "src\Lykke.Domain.Prices.AzureRepositories\Lykke.Domain.Prices.AzureRepositories.xproj", "{42030F8D-37F4-403E-8122-88E4B2F82FF2}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{A9EF469C-76C5-4EB7-BBFB-394E1C310782}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "unit", "unit", "{AE92CD52-A0EB-4ED2-B8BE-CD74E1959B01}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "CandlesWriter.Core.Tests", "test\unit\CandlesWriter.Core.Tests\CandlesWriter.Core.Tests.xproj", "{C7BFE994-8801-426B-89DF-6243BCC2D8EA}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Lykke.Domain.Prices.AzureRepositories.Tests", "src\Lykke.Domain.Prices.AzureRepositories.Tests\Lykke.Domain.Prices.AzureRepositories.Tests.xproj", "{8A33CA06-1562-428B-AD90-FB41DA7281B3}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "integration", "integration", "{1AB788AC-A979-474A-9390-EB90890D76FE}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "CandlesWriter.Core.IntTests", "test\integration\CandlesWriter.Core.IntTests\CandlesWriter.Core.IntTests.xproj", "{64188403-A870-4BCC-B85B-CFBD70C5E4DE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "submodules", "submodules", "{E5DDE00D-3A99-41FE-96CB-AC9ECF319B9C}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "AzureRepositories.Candles", "submodules\azurerepositories.candles\src\AzureRepositories.Candles\AzureRepositories.Candles.xproj", "{BC0C120B-30E2-4F30-9E20-73162E950A24}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,22 +44,18 @@ Global
 		{7E64AFE5-FB0E-499F-831D-7106C720D330}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7E64AFE5-FB0E-499F-831D-7106C720D330}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7E64AFE5-FB0E-499F-831D-7106C720D330}.Release|Any CPU.Build.0 = Release|Any CPU
-		{42030F8D-37F4-403E-8122-88E4B2F82FF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{42030F8D-37F4-403E-8122-88E4B2F82FF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{42030F8D-37F4-403E-8122-88E4B2F82FF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{42030F8D-37F4-403E-8122-88E4B2F82FF2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C7BFE994-8801-426B-89DF-6243BCC2D8EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C7BFE994-8801-426B-89DF-6243BCC2D8EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7BFE994-8801-426B-89DF-6243BCC2D8EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7BFE994-8801-426B-89DF-6243BCC2D8EA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8A33CA06-1562-428B-AD90-FB41DA7281B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8A33CA06-1562-428B-AD90-FB41DA7281B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8A33CA06-1562-428B-AD90-FB41DA7281B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8A33CA06-1562-428B-AD90-FB41DA7281B3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{64188403-A870-4BCC-B85B-CFBD70C5E4DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{64188403-A870-4BCC-B85B-CFBD70C5E4DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64188403-A870-4BCC-B85B-CFBD70C5E4DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64188403-A870-4BCC-B85B-CFBD70C5E4DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC0C120B-30E2-4F30-9E20-73162E950A24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC0C120B-30E2-4F30-9E20-73162E950A24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC0C120B-30E2-4F30-9E20-73162E950A24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC0C120B-30E2-4F30-9E20-73162E950A24}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -66,11 +63,10 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{6D03B17F-9DD6-4543-9EEC-BA07C97C1D02} = {0397A305-9A28-4701-9558-E87CB8FF1715}
 		{7E64AFE5-FB0E-499F-831D-7106C720D330} = {0397A305-9A28-4701-9558-E87CB8FF1715}
-		{42030F8D-37F4-403E-8122-88E4B2F82FF2} = {0397A305-9A28-4701-9558-E87CB8FF1715}
 		{AE92CD52-A0EB-4ED2-B8BE-CD74E1959B01} = {A9EF469C-76C5-4EB7-BBFB-394E1C310782}
 		{C7BFE994-8801-426B-89DF-6243BCC2D8EA} = {AE92CD52-A0EB-4ED2-B8BE-CD74E1959B01}
-		{8A33CA06-1562-428B-AD90-FB41DA7281B3} = {0397A305-9A28-4701-9558-E87CB8FF1715}
 		{1AB788AC-A979-474A-9390-EB90890D76FE} = {A9EF469C-76C5-4EB7-BBFB-394E1C310782}
 		{64188403-A870-4BCC-B85B-CFBD70C5E4DE} = {1AB788AC-A979-474A-9390-EB90890D76FE}
+		{BC0C120B-30E2-4F30-9E20-73162E950A24} = {E5DDE00D-3A99-41FE-96CB-AC9ECF319B9C}
 	EndGlobalSection
 EndGlobal

@@ -24,9 +24,9 @@ namespace CandlesWriter.Broker
 
         public static string ApplicationName { get { return "FeedCandlesHistoryWriterBroker"; } }
 
-        public Startup(string settingsJson, ILog log)
+        public Startup(AppSettings settings, ILog log)
         {
-            this.settings = JsonConvert.DeserializeObject<AppSettings>(settingsJson);
+            this.settings = settings;
         }
 
         public void ConfigureServices(ContainerBuilder builder, ILog log)

@@ -17,10 +17,8 @@
       "type": "platform",
       "version": "1.1.0"
     },
-    "Lykke.AzureStorage": "1.2.7",
-    "Lykke.Common": "1.1.21",
-    "Lykke.Logs": "1.0.10",
-    "Lykke.RabbitMqBroker": "1.0.43",
+    "Lykke.AzureStorage": "1.2.18",
+    "Lykke.Common": "1.1.67",
     "Lykke.SlackNotifications": "1.0.10",
     "Lykke.SlackNotification.AzureQueue": "1.0.4",
     "Microsoft.Extensions.Configuration": "1.1.0",
@@ -30,7 +28,10 @@
     "Microsoft.Extensions.DependencyInjection": "1.1.0",
     "CandlesWriter.Core": {
       "target": "project"
-    }
+    },
+    "Lykke.Logs": "1.0.14",
+    "Lykke.RabbitMqBroker": "1.0.59",
+    "Flurl.Http": "1.1.2"
   },
 
   "frameworks": {

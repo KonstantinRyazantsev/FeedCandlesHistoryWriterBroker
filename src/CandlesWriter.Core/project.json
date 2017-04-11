@@ -5,7 +5,7 @@
     "Microsoft.NETCore.App": "1.1.0",
     "AzureRepositories.Candles": { "target": "project" },
     "Lykke.Domain.Prices": "0.8.1",
-    "Lykke.Common": "1.1.21"
+    "Lykke.Common": "1.1.67"
   },
 
   "frameworks": {

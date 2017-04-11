@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Flurl.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
 
 using AzureStorage.Tables;
 using Common.Application;
 using Common.Log;
-using Common.HttpRemoteRequests;
 using Lykke.Logs;
 using Lykke.SlackNotification.AzureQueue;
 
@@ -36,8 +35,7 @@ namespace CandlesWriter.Broker
                 var settingsUrl = config.GetValue<string>("BROKER_SETTINGS_URL");
 
                 log.Info("Loading app settings from web-site.");
-                string settingsJson = LoadSettings(settingsUrl);
-                var appSettings = JsonConvert.DeserializeObject<AppSettings>(settingsJson);
+                var appSettings = LoadSettings(settingsUrl);
 
                 log.Info("Initializing azure/slack logger.");
                 var services = new ServiceCollection(); // only used for azure logger
@@ -48,7 +46,7 @@ namespace CandlesWriter.Broker
                 // After log is configured
                 //
                 log.Info("Creating Startup.");
-                var startup = new Startup(settingsJson, log);
+                var startup = new Startup(appSettings, log);
 
                 log.Info("Configure startup services.");
                 startup.ConfigureServices(Application.Instance.ContainerBuilder, log);
@@ -70,10 +68,9 @@ namespace CandlesWriter.Broker
             }
         }
 
-        private static string LoadSettings(string url)
+        private static AppSettings LoadSettings(string url)
         {
-            HttpRequestClient webClient = new HttpRequestClient();
-            return webClient.GetRequest(url, "application/json").Result;
+            return url.GetJsonAsync<AppSettings>().Result;
         }
     }
 

@@ -31,7 +31,7 @@ namespace CandlesWriter.Broker
 
         public void ConfigureServices(ContainerBuilder builder, ILog log)
         {
-            var mq = settings.RabbitMq;
+            var mq = settings.FeedCandlesHistoryWriterBroker.RabbitMq;
             RabbitMqSettings subscriberSettings = new RabbitMqSettings()
             {
                 ConnectionString = $"amqp://{mq.Username}:{mq.Password}@{mq.Host}:{mq.Port}",

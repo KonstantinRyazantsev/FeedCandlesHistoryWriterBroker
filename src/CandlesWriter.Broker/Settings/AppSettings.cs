@@ -11,10 +11,10 @@ namespace CandlesWriter.Broker
     {
         public SlackNotificationsSettings SlackNotifications { get; set; } = new SlackNotificationsSettings();
         public FeedCandlesHistoryWriterBrokerSettings FeedCandlesHistoryWriterBroker { get; set; } = new FeedCandlesHistoryWriterBrokerSettings();
-        public RabbitMqSettings RabbitMq { get; set; } = new RabbitMqSettings();
 
         public class FeedCandlesHistoryWriterBrokerSettings
         {
+            public RabbitMqSettings RabbitMq { get; set; } = new RabbitMqSettings();
             public ConnectionStringsSettings ConnectionStrings { get; set; } = new ConnectionStringsSettings();
         }
 

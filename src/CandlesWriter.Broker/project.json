@@ -30,7 +30,7 @@
       "target": "project"
     },
     "Lykke.Logs": "1.0.14",
-    "Lykke.RabbitMqBroker": "1.0.59",
+    "Lykke.RabbitMqBroker": "1.0.62",
     "Flurl.Http": "1.1.2"
   },
 

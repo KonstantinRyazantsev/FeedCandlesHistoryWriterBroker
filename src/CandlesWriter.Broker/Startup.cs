@@ -32,10 +32,12 @@ namespace CandlesWriter.Broker
         public void ConfigureServices(ContainerBuilder builder, ILog log)
         {
             var mq = settings.FeedCandlesHistoryWriterBroker.RabbitMq;
-            RabbitMqSettings subscriberSettings = new RabbitMqSettings()
+            RabbitMqSubscriberSettings subscriberSettings = new RabbitMqSubscriberSettings()
             {
                 ConnectionString = $"amqp://{mq.Username}:{mq.Password}@{mq.Host}:{mq.Port}",
-                QueueName = mq.QuoteFeed
+                QueueName = mq.QuoteFeed + ".candleshistorywriter",
+                ExchangeName = mq.QuoteFeed,
+                IsDurable = true
             };
 
             var subscriber = new RabbitMqSubscriber<Quote>(subscriberSettings);

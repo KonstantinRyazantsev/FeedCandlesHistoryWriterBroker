@@ -46,9 +46,9 @@ namespace CandlesWriter.Broker
             this.logger = logger;
             this.subscriber = subscriber;
 
+            // Using default message reader strategy
             subscriber
                   .SetMessageDeserializer(new MessageDeserializer())
-                  .SetMessageReadStrategy(new MessageReadWithTemporaryQueueStrategy())
                   .Subscribe(HandleMessage)
                   .SetLogger(logger);
 

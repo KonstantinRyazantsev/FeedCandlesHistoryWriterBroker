@@ -5,40 +5,49 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
+using Common;
 using Common.Log;
 using Lykke.Domain.Prices;
 using Lykke.Domain.Prices.Model;
-using Lykke.Domain.Prices.Contracts;
 using Lykke.Domain.Prices.Repositories;
-using Common;
+using System.Threading;
 
 namespace CandlesWriter.Core
 {
-    public class CandleGenerationController
+    public class CandleGenerationController : ProducerConsumer<Task>, IStartable, IStopable
     {
-        private delegate ICandleHistoryRepository RepoProvider();
+        private delegate T RepoProvider<T>();
         private readonly static string PROCESS = "CandleGenerationController";
-        private const int CHUNK_SIZE = 10;
         private readonly static IReadOnlyList<TimeInterval> REQUIRED_INTERVALS = new TimeInterval[]
         {
+            // Store only Sec, Minute, Min30, Hour, Day, Week, Month intervals
             TimeInterval.Sec,
             TimeInterval.Minute,
-            TimeInterval.Min5,
-            TimeInterval.Min15,
+//            TimeInterval.Min5,
+//            TimeInterval.Min15,
             TimeInterval.Min30,
             TimeInterval.Hour,
-            TimeInterval.Hour4,
-            TimeInterval.Hour6,
-            TimeInterval.Hour12,
+//            TimeInterval.Hour4,
+//            TimeInterval.Hour6,
+//            TimeInterval.Hour12,
             TimeInterval.Day,
             TimeInterval.Week,
             TimeInterval.Month
         };
 
+        private readonly static IReadOnlyList<PriceType> REQUIRED_TYPES = new PriceType[]
+        {
+            PriceType.Ask,
+            PriceType.Bid,
+            PriceType.Mid
+        };
+
         private readonly ICandleHistoryRepository candleRepository;
-        private readonly ILog logger;
+        private readonly ILog log;
         private readonly string componentName;
-        private readonly ConcurrentQueue<Quote> quotesQueue = new ConcurrentQueue<Quote>();
+        private readonly ConcurrentQueue<QuoteExt> quotesQueue = new ConcurrentQueue<QuoteExt>();
+        private readonly QuoteHandler handler;
+        private volatile int queueLength = 0;
 
         /// <summary>Last time service logs were made</summary>
         private DateTime lastServiceLogTime = DateTime.MinValue;
@@ -66,22 +75,42 @@ namespace CandlesWriter.Core
         /// Constructs repository.
         /// ILifetimeScope must be set for resolving ICandleHistoryRepository.
         /// </summary>
-        /// <param name="logger"></param>
+        /// <param name="log"></param>
         /// <param name="componentName"></param>
-        public CandleGenerationController(ILog logger, string componentName = "")
+        public CandleGenerationController(ILog log, string componentName, IEnvironment env)
+            : base(componentName, log)
         {
-            this.logger = logger;
+            this.log = log;
             this.componentName = componentName;
+            // Build handles chain
+            this.handler = new MidHandler(env,
+                new DefaultHandler(null));
         }
 
-        public CandleGenerationController(ICandleHistoryRepository repo, ILog logger, string componentName = "")
+        public CandleGenerationController(ICandleHistoryRepository candlesRepo, ILog logger, string componentName, IEnvironment env)
+            : this(logger, componentName, env)
         {
-            this.candleRepository = repo;
-            this.logger = logger;
-            this.componentName = componentName;
+            this.candleRepository = candlesRepo;
         }
 
-        public async Task ConsumeQuote(Quote quote)
+        public new void Start()
+        {
+            log.WriteInfoAsync(this.componentName, "", "", "Starting controller.").Wait();
+            base.Start();
+        }
+
+        public new void Stop()
+        {
+            log.WriteInfoAsync(this.componentName, "", "", "Stopping controller").Wait();
+            base.Stop();
+        }
+
+        public int QueueLength
+        {
+            get { return this.queueLength; }
+        }
+
+        public async Task HandleQuote(Quote quote)
         {
             // Validate incoming quote
             //
@@ -90,25 +119,33 @@ namespace CandlesWriter.Core
             {
                 foreach (string error in validationErrors)
                 {
-                    await this.logger.WriteErrorAsync(this.componentName, PROCESS, "", new ArgumentException("Received invalid quote. " + error));
+                    await this.log.WriteErrorAsync(this.componentName, PROCESS, "", new ArgumentException("Received invalid quote. " + error));
                 }
                 return; // Skipping invalid quotes
             }
 
             // Add quote to the processing queue
-            this.quotesQueue.Enqueue(quote);
+            var quoteExt = new QuoteExt()
+            {
+                AssetPair = quote.AssetPair,
+                IsBuy = quote.IsBuy,
+                Price = quote.Price,
+                Timestamp = quote.Timestamp,
+                PriceType = quote.IsBuy ? PriceType.Bid : PriceType.Ask
+            };
+            this.quotesQueue.Enqueue(quoteExt);
         }
 
-        public async Task Tick()
+        public void Tick()
         {
             // Get a snapshot of quotes collection and process it
             //
             int countQuotes = this.quotesQueue.Count();
-            List<Quote> unprocessedQuotes = new List<Quote>(countQuotes);
+            List<QuoteExt> unprocessedQuotes = new List<QuoteExt>(countQuotes);
 
             for (int i = 0; i < countQuotes; i++)
             {
-                Quote quote;
+                QuoteExt quote;
                 if (this.quotesQueue.TryDequeue(out quote))
                 {
                     unprocessedQuotes.Add(quote);
@@ -119,15 +156,32 @@ namespace CandlesWriter.Core
                 }
             }
 
-            await ProcessQuotes(unprocessedQuotes);
+            // Add processing task to producer/consumer's queue
+            var task = ProcessQuotes(unprocessedQuotes);
+            Interlocked.Increment(ref this.queueLength);
+            this.Produce(task);
         }
 
-        private async Task ProcessQuotes(List<Quote> unprocessedQuotes)
+        protected override async Task Consume(Task t)
         {
-            if (this.globalScope == null && this.candleRepository == null)
+            // On consume just await task
+            //
+#if DEBUG
+            await this.log.WriteInfoAsync(this.componentName, "", "", "Consuming task. Amount of tasks in queue=" + this.queueLength);
+#endif
+            await t;
+            Interlocked.Decrement(ref this.queueLength);
+#if DEBUG
+            await this.log.WriteInfoAsync(this.componentName, "", "", "Task is finished. Amount of tasks in queue=" + this.queueLength);
+#endif
+        }
+
+        private async Task ProcessQuotes(List<QuoteExt> unprocessedQuotes)
+        {
+            if (this.globalScope == null && (this.candleRepository == null)) // || this.assetsRepository == null))
             {
                 // Global scope is not set yet, but timer is already running
-                await this.logger.WriteWarningAsync(this.componentName, PROCESS, string.Empty, string.Format("Global scope is not set."));
+                await this.log.WriteWarningAsync(this.componentName, PROCESS, string.Empty, string.Format("Global scope is not set."));
                 return;
             }
 
@@ -136,35 +190,56 @@ namespace CandlesWriter.Core
                 return;
             }
 
+            // Sort quotes by time before passing them to process chain
+            unprocessedQuotes.Sort((lhs, rhs) => DateTime.Compare(lhs.Timestamp, rhs.Timestamp));
+
+            // Process incoming quotes to temporary queue
+            //
+            Queue<QuoteExt> output = new Queue<QuoteExt>();
+            foreach (var quote in unprocessedQuotes)
+            {
+                await this.handler.Handle(quote, output);
+            }
+
+            // Replace incoming quotes with processed quotes
+            unprocessedQuotes = output.ToList();
+
+            // Start generating candles
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
             ILifetimeScope scope = null;
-            try {
+            try
+            {
                 // Provide repository instances
                 // 
-                if (this.globalScope != null) {
+                if (this.globalScope != null)
+                {
                     scope = this.globalScope.BeginLifetimeScope();
                 }
 
-                var repoProvider = scope != null ? 
-                    new RepoProvider(() => scope.Resolve<ICandleHistoryRepository>()) :
-                    new RepoProvider(() => this.candleRepository);
-            
+                var repo = scope != null ? scope.Resolve<ICandleHistoryRepository>() : this.candleRepository;
+
                 // Group quotes by asset
                 var assetGroups = from q in unprocessedQuotes
                                   group q by q.AssetPair into assetGroup
                                   select assetGroup;
-
-                // Write to storage simultaneously with maximum tasks number
-                foreach (var collection in assetGroups.ToPieces(CHUNK_SIZE))
+                var tasks = new List<Task>();
+                foreach (var group in assetGroups)
                 {
-                    var tasks = new List<Task>();
-                    foreach (var group in collection)
-                    {
-                        tasks.Add(ProcessQuotesForAsset(repoProvider(), group, group.Key));
-                    }
-                    await Task.WhenAll(tasks);
+                    tasks.AddRange(ProcessQuotesForAsset(repo, group, group.Key));
+                }
+
+                var all = Task.WhenAll(tasks);
+                try
+                {
+                    await all;
+                }
+                catch (AppSettingException ex)
+                {
+                    // Continue if did not found connection string for an asset
+                    await Utils.ThrottleActionAsync(ex.Message,
+                        async () => await this.log.WriteErrorAsync(componentName, PROCESS, "", ex));
                 }
             }
             finally
@@ -178,24 +253,37 @@ namespace CandlesWriter.Core
             this.avgWriteSpan = new TimeSpan((this.avgWriteSpan.Ticks + watch.Elapsed.Ticks) / 2);
             if (DateTime.UtcNow - this.lastServiceLogTime > TimeSpan.FromHours(1))
             {
-                await this.logger.WriteInfoAsync(this.componentName, PROCESS, string.Empty, string.Format("Average write time: {0}", this.avgWriteSpan));
+                await this.log.WriteInfoAsync(this.componentName, PROCESS, string.Empty, string.Format("Average write time: {0}", this.avgWriteSpan));
                 this.lastServiceLogTime = DateTime.UtcNow;
             }
         }
 
-        private async Task ProcessQuotesForAsset(ICandleHistoryRepository repo, IEnumerable<Quote> quotes, string asset)
+        private List<Task> ProcessQuotesForAsset(ICandleHistoryRepository repo, IEnumerable<QuoteExt> quotes, string asset)
         {
-            CandleGenerator candleGenerator = new CandleGenerator();
-            var data = new Dictionary<TimeInterval, IEnumerable<IFeedCandle>>();
+            var tasks = new List<Task>();
 
-            // For each asset and interval generate candles from quotes and write them to storage.
-            //
-            foreach (var interval in REQUIRED_INTERVALS)
+            if (quotes.Count() != 0)
             {
-                data.Add(interval, candleGenerator.Generate(quotes, interval));
+                // For each asset and interval generate candles from quotes and write them to storage.
+                //
+                foreach (var interval in REQUIRED_INTERVALS)
+                {
+                    tasks.Add(this.Insert(repo, quotes, asset, interval));
+                }
             }
 
-            await repo.InsertOrMergeAsync(data, asset);
+            return tasks;
+        }
+
+        private async Task Insert(ICandleHistoryRepository repo, IEnumerable<QuoteExt> quotes, string asset, TimeInterval interval)
+        {
+            CandleGenerator candleGenerator = new CandleGenerator();
+
+            foreach (var type in REQUIRED_TYPES)
+            {
+                var data = candleGenerator.Generate(quotes, interval, type);
+                await repo.InsertOrMergeAsync(data, asset, interval, type);
+            }
         }
 
         private ICollection<string> Validate(Quote quote)

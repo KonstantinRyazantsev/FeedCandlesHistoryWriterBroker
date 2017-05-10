@@ -14,38 +14,34 @@ namespace CandlesWriter.Core.Tests.Stub
 
         public IReadOnlyList<StoreItem> Stored { get { return this.storage; } }
 
-        public Task<IFeedCandle> GetCandleAsync(string asset, TimeInterval interval, bool isBuy, DateTime dateTime)
+        public Task<IFeedCandle> GetCandleAsync(string asset, TimeInterval interval, PriceType priceType, DateTime dateTime)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<IFeedCandle>> GetCandlesAsync(string asset, TimeInterval interval, bool isBuy, DateTime from, DateTime to)
+        public Task<IEnumerable<IFeedCandle>> GetCandlesAsync(string asset, TimeInterval interval, PriceType priceType, DateTime from, DateTime to)
         {
             throw new NotImplementedException();
         }
 
-        public Task InsertOrMergeAsync(IReadOnlyDictionary<TimeInterval, IEnumerable<IFeedCandle>> candles, string asset)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task InsertOrMergeAsync(IEnumerable<IFeedCandle> candles, string asset, TimeInterval interval)
+        public async Task InsertOrMergeAsync(IEnumerable<IFeedCandle> candles, string asset, TimeInterval interval, PriceType priceType)
         {
             foreach(var candle in candles)
             {
-                await this.InsertOrMergeAsync(candle, asset, interval);
+                await this.InsertOrMergeAsync(candle, asset, interval, priceType);
             }
         }
 
-        public Task InsertOrMergeAsync(IFeedCandle candle, string asset, TimeInterval interval)
+        public Task InsertOrMergeAsync(IFeedCandle candle, string asset, TimeInterval interval, PriceType priceType)
         {
             this.storage.Add(new StoreItem()
             {
                 candle = candle,
                 asset = asset,
-                interval = interval
+                interval = interval,
+                priceType = priceType
             });
-            return Task.FromResult(0);
+            return Task.Delay(200);
         }
 
         public struct StoreItem
@@ -53,6 +49,7 @@ namespace CandlesWriter.Core.Tests.Stub
             public IFeedCandle candle;
             public string asset;
             public TimeInterval interval;
+            public PriceType priceType;
         }
     }
 }

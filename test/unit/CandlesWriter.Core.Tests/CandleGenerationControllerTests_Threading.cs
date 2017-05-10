@@ -16,11 +16,15 @@ namespace CandlesWriter.Core.Tests
         public void NoExceptionExpectedOnMultithread()
         {
             var logger = new LoggerStub();
-            var repo = new CandleHistoryRepositoryStub();
-            var controller = new CandleGenerationController(repo, logger, "test component");
+            var candlesRepo = new CandleHistoryRepositoryStub();
+            var env = new EnvironmentStub(new List<AssetPair>()
+            {
+                new AssetPair() { Id="btcusd", Accuracy=5 }
+            });
+            var controller = new CandleGenerationController(candlesRepo, logger, "test component", env);
 
             // Cancel after 1 sec
-            CancellationTokenSource tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            CancellationTokenSource tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(2));
             CancellationToken token = tokenSource.Token;
 
             int consumeCalledTimes = 0;
@@ -31,29 +35,30 @@ namespace CandlesWriter.Core.Tests
             {
                 while(!token.IsCancellationRequested)
                 {
-                    await controller.ConsumeQuote(new Quote() {
+                    await controller.HandleQuote(new Quote() {
                          AssetPair = "btcusd",
                          IsBuy = true,
                          Price = 100,
-                         Timestamp = DateTime.Now
+                         Timestamp = DateTime.UtcNow
                     });
                     Interlocked.Increment(ref consumeCalledTimes);
                 }
             }, token);
 
-            Task timer = Task.Run(async () =>
+            Task timer = Task.Run(() =>
             {
                 while (!token.IsCancellationRequested)
                 {
-                    await controller.Tick();
+                    controller.Tick();
                     Interlocked.Increment(ref tickCalledTimes);
                 }
             }, token);
 
             Task.WaitAll(producing, timer);
-
+            
             Assert.True(consumeCalledTimes > 0);
             Assert.True(tickCalledTimes > 0);
+            Assert.True(candlesRepo.Stored.Count > 0);
         }
     }
 }

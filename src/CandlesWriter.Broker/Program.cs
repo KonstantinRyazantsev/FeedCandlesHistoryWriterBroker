@@ -70,7 +70,12 @@ namespace CandlesWriter.Broker
 
         private static AppSettings LoadSettings(string url)
         {
-            return url.GetJsonAsync<AppSettings>().Result;
+            var settings = url.GetJsonAsync<AppSettings>().Result;
+            // Ignore case for asset keys:
+            var origConnections = settings.FeedCandlesHistoryWriterBroker.ConnectionStrings.AssetConnections;
+            settings.FeedCandlesHistoryWriterBroker.ConnectionStrings.AssetConnections =
+                new Dictionary<string, string>(origConnections, StringComparer.OrdinalIgnoreCase);
+            return settings;
         }
     }
 

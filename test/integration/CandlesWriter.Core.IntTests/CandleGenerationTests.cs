@@ -19,58 +19,13 @@ namespace CandlesWriter.Core.IntTests
     public class CandleGenerationTests
     {
         [Fact]
-        public void RepositorySupportsLegacyRows()
-        {
-            // Create record with legacy row
-            //
-            var logger = new LoggerStub();
-            DateTime dt = new DateTime(2016, 11, 30, 0, 0, 0, DateTimeKind.Utc);
-            var storage = CreateStorage<Legacy.FeedCandleEntity>(logger);
-
-            var entity = new Legacy.FeedCandleEntity()
-            {
-                PartitionKey = "BTCCHF_BUY_Hour",
-                RowKey = "2016-11-30",
-                Open = 740.508,
-                Close = 755.11,
-                High = 755.491,
-                Low = 738.679,
-                IsBuy = true,
-                Time = 0,
-                DateTime = dt,
-                Data = "[{\"O\":740.508,\"C\":741.843,\"H\":742.596,\"L\":738.679,\"T\":0},{\"O\":741.865,\"C\":741.785,\"H\":742.731,\"L\":740.709,\"T\":1},{\"O\":753.497,\"C\":755.11,\"H\":755.491,\"L\":753.486,\"T\":23}]"
-            };
-
-            storage.InsertOrReplaceAsync(entity).Wait();
-
-            #region "Read created row with new repository's GetCandles method"
-
-            var repo = new CandleHistoryRepository(CreateStorage<CandleTableEntity>(logger, clear: false));
-            var candles = repo.GetCandlesAsync("BTCCHF", TimeInterval.Hour, true, dt.AddDays(-1), dt.AddDays(1)).Result.ToArray();
-
-            // Does not read data, and does not throw exceptions.
-            Assert.Equal(0, candles.Length);
-
-            #endregion
-
-            #region "Read created row with new repository's GetCandle method"
-
-            IFeedCandle candle1 = repo.GetCandleAsync("BTCCHF", TimeInterval.Hour, true, dt).Result;
-            // Does not read data, and does not throw exceptions.
-            Assert.Null(candle1);
-
-            IFeedCandle candle2 = repo.GetCandleAsync("BTCCHF", TimeInterval.Hour, true, dt.AddHours(1)).Result;
-            Assert.Null(candle2);
-
-            #endregion
-        }
-
-        [Fact]
         public void QuotesSortedByAssetAndBuy()
         {
             var logger = new LoggerStub();
-            var storage = CreateStorage<CandleTableEntity>(logger);
-            var repo = new CandleHistoryRepository(storage);
+            var repo = new CandleHistoryRepositoryResolver((string asset, string tableName) =>
+                {
+                    return CreateStorage<CandleTableEntity>(asset, tableName, logger);
+                });
 
             DateTime dt = new DateTime(2017, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             const string asset1 = "btcusd";
@@ -94,57 +49,52 @@ namespace CandlesWriter.Core.IntTests
 
             // 2. Process incoming quotes
             //
-            ProcessAllQuotes( quotes, repo, logger);
+            ProcessAllQuotes(quotes, repo, logger);
 
-            // ... check for no errors
-            Assert.Equal(0, logger.Log.Where(rec => rec.Severity != LoggerStub.Severity.Info).Count());
+            // ... check for errors
+            Assert.Equal(1, logger.Log.Where(rec => rec.Severity != LoggerStub.Severity.Info).Count());
 
             // 3. Read candles with repository and check count of generated candles
             //
             #region "Validation"
 
             CheckCountGenerated(repo, dt.AddDays(-1), dt.AddDays(1), new[] {
-                new { Asset = asset1, Interval = TimeInterval.Sec, IsBuy = true, CountExpected = 2 },
-                new { Asset = asset1, Interval = TimeInterval.Minute, IsBuy = true, CountExpected = 1 },
-                new { Asset = asset1, Interval = TimeInterval.Min5, IsBuy = true, CountExpected = 1 },
-                new { Asset = asset1, Interval = TimeInterval.Min15, IsBuy = true, CountExpected = 1 },
-                new { Asset = asset1, Interval = TimeInterval.Min30, IsBuy = true, CountExpected = 1 },
-                new { Asset = asset1, Interval = TimeInterval.Hour, IsBuy = true, CountExpected = 1 },
-                new { Asset = asset1, Interval = TimeInterval.Day, IsBuy = true, CountExpected = 1 },
-                new { Asset = asset1, Interval = TimeInterval.Month, IsBuy = true, CountExpected = 1 }
+                new { Asset = asset1, Interval = TimeInterval.Sec, PriceType = PriceType.Bid, CountExpected = 2 },
+                new { Asset = asset1, Interval = TimeInterval.Minute, PriceType = PriceType.Bid, CountExpected = 1 },
+                new { Asset = asset1, Interval = TimeInterval.Min30, PriceType = PriceType.Bid, CountExpected = 1 },
+                new { Asset = asset1, Interval = TimeInterval.Hour, PriceType = PriceType.Bid, CountExpected = 1 },
+                new { Asset = asset1, Interval = TimeInterval.Day, PriceType = PriceType.Bid, CountExpected = 1 },
+                new { Asset = asset1, Interval = TimeInterval.Month, PriceType = PriceType.Bid, CountExpected = 1 }
+            });
+
+            CheckCountGenerated(repo, new DateTime(2016, 12, 26), dt.AddDays(1), new[] {
+                new { Asset = asset1, Interval = TimeInterval.Week, PriceType = PriceType.Bid, CountExpected = 1 }
             });
 
             CheckCountGenerated(repo, dt.AddDays(-1), dt.AddDays(1), new[] {
-                new { Asset = asset1, Interval = TimeInterval.Sec, IsBuy = false, CountExpected = 1 },
-                new { Asset = asset1, Interval = TimeInterval.Minute, IsBuy = false, CountExpected = 1 },
-                new { Asset = asset1, Interval = TimeInterval.Min5, IsBuy = false, CountExpected = 1 },
-                new { Asset = asset1, Interval = TimeInterval.Min15, IsBuy = false, CountExpected = 1 },
-                new { Asset = asset1, Interval = TimeInterval.Min30, IsBuy = false, CountExpected = 1 },
-                new { Asset = asset1, Interval = TimeInterval.Hour, IsBuy = false, CountExpected = 1 },
-                new { Asset = asset1, Interval = TimeInterval.Day, IsBuy = false, CountExpected = 1 },
-                new { Asset = asset1, Interval = TimeInterval.Month, IsBuy = false, CountExpected = 1 }
+                new { Asset = asset1, Interval = TimeInterval.Sec, PriceType = PriceType.Ask, CountExpected = 1 },
+                new { Asset = asset1, Interval = TimeInterval.Minute, PriceType = PriceType.Ask, CountExpected = 1 },
+                new { Asset = asset1, Interval = TimeInterval.Min30, PriceType = PriceType.Ask, CountExpected = 1 },
+                new { Asset = asset1, Interval = TimeInterval.Hour, PriceType = PriceType.Ask, CountExpected = 1 },
+                new { Asset = asset1, Interval = TimeInterval.Day, PriceType = PriceType.Ask, CountExpected = 1 },
+                new { Asset = asset1, Interval = TimeInterval.Month, PriceType = PriceType.Ask, CountExpected = 1 }
             });
 
-            CheckCountGenerated(repo, dt.AddDays(-1), dt.AddDays(2), new[] {
-                new { Asset = asset2, Interval = TimeInterval.Sec, IsBuy = true, CountExpected = 2 },
-                new { Asset = asset2, Interval = TimeInterval.Minute, IsBuy = true, CountExpected = 1 },
-                new { Asset = asset2, Interval = TimeInterval.Min5, IsBuy = true, CountExpected = 1 },
-                new { Asset = asset2, Interval = TimeInterval.Min15, IsBuy = true, CountExpected = 1 },
-                new { Asset = asset2, Interval = TimeInterval.Min30, IsBuy = true, CountExpected = 1 },
-                new { Asset = asset2, Interval = TimeInterval.Hour, IsBuy = true, CountExpected = 1 },
-                new { Asset = asset2, Interval = TimeInterval.Day, IsBuy = true, CountExpected = 1 },
-                new { Asset = asset2, Interval = TimeInterval.Month, IsBuy = true, CountExpected = 1 }
+            CheckCountGenerated(repo, new DateTime(2016, 12, 26), dt.AddDays(1), new[] {
+                new { Asset = asset1, Interval = TimeInterval.Week, PriceType = PriceType.Ask, CountExpected = 1 }
             });
 
-            CheckCountGenerated(repo, dt.AddDays(-1), dt.AddDays(2), new[] {
-                new { Asset = asset2, Interval = TimeInterval.Sec, IsBuy = false, CountExpected = 1 },
-                new { Asset = asset2, Interval = TimeInterval.Minute, IsBuy = false, CountExpected = 1 },
-                new { Asset = asset2, Interval = TimeInterval.Min5, IsBuy = false, CountExpected = 1 },
-                new { Asset = asset2, Interval = TimeInterval.Min15, IsBuy = false, CountExpected = 1 },
-                new { Asset = asset2, Interval = TimeInterval.Min30, IsBuy = false, CountExpected = 1 },
-                new { Asset = asset2, Interval = TimeInterval.Hour, IsBuy = false, CountExpected = 1 },
-                new { Asset = asset2, Interval = TimeInterval.Day, IsBuy = false, CountExpected = 1 },
-                new { Asset = asset2, Interval = TimeInterval.Month, IsBuy = false, CountExpected = 1 }
+            CheckCountGenerated(repo, dt.AddDays(-1), dt.AddDays(1), new[] {
+                new { Asset = asset1, Interval = TimeInterval.Sec, PriceType = PriceType.Mid, CountExpected = 1 },
+                new { Asset = asset1, Interval = TimeInterval.Minute, PriceType = PriceType.Mid, CountExpected = 1 },
+                new { Asset = asset1, Interval = TimeInterval.Min30, PriceType = PriceType.Mid, CountExpected = 1 },
+                new { Asset = asset1, Interval = TimeInterval.Hour, PriceType = PriceType.Mid, CountExpected = 1 },
+                new { Asset = asset1, Interval = TimeInterval.Day, PriceType = PriceType.Mid, CountExpected = 1 },
+                new { Asset = asset1, Interval = TimeInterval.Month, PriceType = PriceType.Mid, CountExpected = 1 }
+            });
+
+            CheckCountGenerated(repo, new DateTime(2016, 12, 26), dt.AddDays(1), new[] {
+                new { Asset = asset1, Interval = TimeInterval.Week, PriceType = PriceType.Mid, CountExpected = 1 }
             });
 
             #endregion
@@ -154,8 +104,10 @@ namespace CandlesWriter.Core.IntTests
         public void CandlesAreInsertedAndMerged()
         {
             var logger = new LoggerStub();
-            var storage = CreateStorage<CandleTableEntity>(logger);
-            var repo = new CandleHistoryRepository(storage);
+            var repo = new CandleHistoryRepositoryResolver((string ast, string tableName) =>
+            {
+                return CreateStorage<CandleTableEntity>(ast, tableName, logger);
+            });
 
             DateTime dt = new DateTime(2017, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             const string asset = "btcusd";
@@ -177,7 +129,7 @@ namespace CandlesWriter.Core.IntTests
             // 3. Read candles with repository and check count of generated candles
             //
             CheckCountGenerated(repo, dt.AddDays(-1), dt.AddDays(1), new[] {
-                new { Asset = asset, Interval = TimeInterval.Sec, IsBuy = true, CountExpected = 1 },
+                new { Asset = asset, Interval = TimeInterval.Sec, PriceType = PriceType.Bid, CountExpected = 1 }
             });
 
             // 4. Send more quotes that should generate two candles. One candle should be merged and one candle should be added.
@@ -191,10 +143,10 @@ namespace CandlesWriter.Core.IntTests
 
             // ... check for no errors
             Assert.Equal(0, logger.Log.Where(rec => rec.Severity != LoggerStub.Severity.Info).Count());
-            
+
             // 5. Validate merging
             //
-            var candles = repo.GetCandlesAsync(asset, TimeInterval.Sec, true, dt.AddDays(-1), dt.AddDays(1)).Result.ToArray();
+            var candles = repo.GetCandlesAsync(asset, TimeInterval.Sec, PriceType.Bid, dt.AddDays(-1), dt.AddDays(1)).Result.ToArray();
             Assert.Equal(2, candles.Length);
             // ! Low value is from the first quote
             Assert.True(candles[0].IsEqual(new FeedCandle() { Open = 102, Close = 102, High = 102, Low = 101, IsBuy = true, DateTime = dt }));
@@ -203,16 +155,21 @@ namespace CandlesWriter.Core.IntTests
 
         private void CheckCountGenerated(ICandleHistoryRepository repo, DateTime from, DateTime to, dynamic[] requirements)
         {
-            foreach(var req in requirements)
+            foreach (var req in requirements)
             {
-                IEnumerable<IFeedCandle> candles = repo.GetCandlesAsync(req.Asset, req.Interval, req.IsBuy, from, to).Result;
+                IEnumerable<IFeedCandle> candles = repo.GetCandlesAsync(req.Asset, req.Interval, req.PriceType, from, to).Result;
                 Assert.Equal(req.CountExpected, candles.Count());
             }
         }
 
-        private INoSQLTableStorage<T> CreateStorage<T>(ILog logger, bool clear = true) where T : class, ITableEntity, new()
+        private INoSQLTableStorage<T> CreateStorage<T>(string asset, string tableName, ILog logger, bool clear = true) where T : class, ITableEntity, new()
         {
-            var table = new AzureTableStorage<T>("UseDevelopmentStorage=true;", "CandlesHistoryTest", logger);
+            if (asset != "btcusd")
+            {
+                throw new AppSettingException("");
+            }
+
+            var table = new AzureTableStorage<T>("UseDevelopmentStorage=true;", tableName, logger);
             if (clear)
             {
                 ClearTable(table);
@@ -226,8 +183,7 @@ namespace CandlesWriter.Core.IntTests
         private static void ClearTable<T>(AzureTableStorage<T> table) where T : class, ITableEntity, new()
         {
             var entities = new List<T>();
-            do
-            {
+            do {
                 entities.Clear();
                 table.GetDataByChunksAsync(collection => entities.AddRange(collection)).Wait();
                 entities.ForEach(e => table.DeleteAsync(e).Wait());
@@ -236,18 +192,23 @@ namespace CandlesWriter.Core.IntTests
 
         private static void ProcessAllQuotes(IEnumerable<Quote> quotes, ICandleHistoryRepository repo, LoggerStub logger)
         {
-            var controller = new CandleGenerationController(repo, logger, "test component");
+            var env = new EnvironmentStub(new List<AssetPair>() {
+                new AssetPair() { Id = "btcusd", Accuracy = 3 },
+                //new AssetPair() { Id = "btcrub", Accuracy = 3 }
+            });
+            var controller = new CandleGenerationController(repo, logger, "test component", env);
 
             var tasks = new List<Task>();
             foreach (var quote in quotes)
             {
-                var task = controller.ConsumeQuote(quote);
+                var task = controller.HandleQuote(quote);
                 tasks.Add(task);
             }
             Task.WaitAll(tasks.ToArray());
 
             // ... signal controller to process quotes
-            controller.Tick().Wait();
+            controller.Tick();
+            Task.Delay(3000).Wait(); // Wait while produce task is finished.
         }
     }
 
@@ -265,6 +226,22 @@ namespace CandlesWriter.Core.IntTests
                     && candle.IsBuy == other.IsBuy;
             }
             return false;
+        }
+    }
+
+    internal class EnvironmentStub : IEnvironment
+    {
+        private IEnumerable<AssetPair> assets;
+
+        public EnvironmentStub(IEnumerable<AssetPair> assets)
+        {
+            this.assets = assets;
+        }
+
+        public async Task<int> GetPrecision(string asset)
+        {
+            var assetPair = this.assets.Where(a => a.Id == asset).FirstOrDefault();
+            return assetPair != null ? assetPair.Accuracy : 5;
         }
     }
 }

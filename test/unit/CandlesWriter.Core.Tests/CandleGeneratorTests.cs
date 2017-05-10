@@ -13,9 +13,9 @@ namespace CandlesWriter.Core.Tests
         [Fact]
         public void EmptyReturnedIfNullPassed()
         {
-            IEnumerable<Quote> quotes = null;
+            IEnumerable<QuoteExt> quotes = null;
             var generator = new CandleGenerator();
-            var candles = generator.Generate(quotes, TimeInterval.Sec);
+            var candles = generator.Generate(quotes, TimeInterval.Sec, PriceType.Ask);
             Assert.NotNull(candles);
             Assert.Equal(0, candles.Count());
         }
@@ -23,9 +23,9 @@ namespace CandlesWriter.Core.Tests
         [Fact]
         public void EmptyReturnedIfEmptyCollectionPassed()
         {
-            IEnumerable<Quote> quotes = new Quote[0];
+            IEnumerable<QuoteExt> quotes = new QuoteExt[0];
             var generator = new CandleGenerator();
-            var candles = generator.Generate(quotes, TimeInterval.Sec);
+            var candles = generator.Generate(quotes, TimeInterval.Sec, PriceType.Ask);
             Assert.NotNull(candles);
             Assert.Equal(0, candles.Count());
         }
@@ -36,58 +36,58 @@ namespace CandlesWriter.Core.Tests
             DateTime dt = new DateTime(2017, 1, 1);
             var generator = new CandleGenerator();
 
-            var quotes = new Quote[]
+            var quotes = new QuoteExt[]
             {
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 1.1, Timestamp = dt},
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 0.8, Timestamp = dt}
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 1.1, Timestamp = dt, PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 0.8, Timestamp = dt, PriceType = PriceType.Bid }
             };
 
-            var candles = generator.Generate(quotes, TimeInterval.Sec);
+            var candles = generator.Generate(quotes, TimeInterval.Sec, PriceType.Bid);
             Assert.Equal(1, candles.Count());
 
-            quotes = new Quote[]
+            quotes = new QuoteExt[]
             {
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 1.1, Timestamp = dt.AddMinutes(2).AddSeconds(1)},
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 0.8, Timestamp = dt.AddMinutes(2).AddSeconds(8)}
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 1.1, Timestamp = dt.AddMinutes(2).AddSeconds(1), PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 0.8, Timestamp = dt.AddMinutes(2).AddSeconds(8), PriceType = PriceType.Bid }
             };
 
-            candles = generator.Generate(quotes, TimeInterval.Minute);
+            candles = generator.Generate(quotes, TimeInterval.Minute, PriceType.Bid);
             Assert.Equal(1, candles.Count());
 
-            quotes = new Quote[]
+            quotes = new QuoteExt[]
             {
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 1.1, Timestamp = dt.AddHours(1).AddMinutes(1)},
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 0.8, Timestamp = dt.AddHours(2).AddMinutes(8)}
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 1.1, Timestamp = dt.AddHours(1).AddMinutes(1), PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 0.8, Timestamp = dt.AddHours(2).AddMinutes(8), PriceType = PriceType.Bid }
             };
 
-            candles = generator.Generate(quotes, TimeInterval.Hour);
+            candles = generator.Generate(quotes, TimeInterval.Hour, PriceType.Bid);
             Assert.Equal(2, candles.Count());
 
-            quotes = new Quote[]
+            quotes = new QuoteExt[]
             {
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 1.1, Timestamp = dt.AddDays(1).AddHours(1)},
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 0.8, Timestamp = dt.AddDays(2).AddHours(8)}
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 1.1, Timestamp = dt.AddDays(1).AddHours(1), PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 0.8, Timestamp = dt.AddDays(2).AddHours(8), PriceType = PriceType.Bid }
             };
 
-            candles = generator.Generate(quotes, TimeInterval.Day);
+            candles = generator.Generate(quotes, TimeInterval.Day, PriceType.Bid);
             Assert.Equal(2, candles.Count());
 
-            quotes = new Quote[]
+            quotes = new QuoteExt[]
             {
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 1.1, Timestamp = dt.AddMonths(-2).AddDays(1)},
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 0.8, Timestamp = dt.AddMonths(-1).AddDays(8)}
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 1.1, Timestamp = dt.AddMonths(-2).AddDays(1), PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 0.8, Timestamp = dt.AddMonths(-1).AddDays(8), PriceType = PriceType.Bid }
             };
 
-            candles = generator.Generate(quotes, TimeInterval.Month);
+            candles = generator.Generate(quotes, TimeInterval.Month, PriceType.Bid);
             Assert.Equal(2, candles.Count());
 
-            quotes = new Quote[]
+            quotes = new QuoteExt[]
             {
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 1.1, Timestamp = dt.AddMonths(1).AddDays(1)},
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 0.8, Timestamp = dt.AddMonths(2).AddDays(8)}
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 1.1, Timestamp = dt.AddMonths(1).AddDays(1), PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 0.8, Timestamp = dt.AddMonths(2).AddDays(8), PriceType = PriceType.Bid }
             };
 
-            candles = generator.Generate(quotes, TimeInterval.Month);
+            candles = generator.Generate(quotes, TimeInterval.Month, PriceType.Bid);
             Assert.Equal(2, candles.Count());
         }
 
@@ -96,17 +96,17 @@ namespace CandlesWriter.Core.Tests
         {
             DateTime dt = new DateTime(2017, 1, 1);
 
-            var quotes = new Quote[]
+            var quotes = new QuoteExt[]
             {
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 1, Timestamp = dt.AddMilliseconds(50) },
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 2, Timestamp = dt.AddMilliseconds(100) },
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 3, Timestamp = dt.AddSeconds(5) },
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 4, Timestamp = dt.AddSeconds(15) },
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 5, Timestamp = dt.AddSeconds(15).AddMilliseconds(10) },
-                new Quote { AssetPair = "BTCUSD", IsBuy = true, Price = 6, Timestamp = dt.AddSeconds(15).AddMilliseconds(11) }
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 1, Timestamp = dt.AddMilliseconds(50), PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 2, Timestamp = dt.AddMilliseconds(100), PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 3, Timestamp = dt.AddSeconds(5), PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 4, Timestamp = dt.AddSeconds(15), PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 5, Timestamp = dt.AddSeconds(15).AddMilliseconds(10), PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 6, Timestamp = dt.AddSeconds(15).AddMilliseconds(11), PriceType = PriceType.Bid }
             };
 
-            var candles = new CandleGenerator().Generate(quotes, TimeInterval.Sec).ToArray();
+            var candles = new CandleGenerator().Generate(quotes, TimeInterval.Sec, PriceType.Bid).ToArray();
 
             Assert.Equal(3, candles.Length);
             Assert.True(candles[0].IsEqual(new FeedCandle() { Open = 1, Close = 2, High = 2, Low = 1, IsBuy = true, DateTime = dt }));

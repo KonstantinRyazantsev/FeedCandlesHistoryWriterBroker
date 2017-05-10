@@ -4,7 +4,7 @@
   "dependencies": {
     "Microsoft.NETCore.App": "1.1.0",
     "AzureRepositories.Candles": { "target": "project" },
-    "Lykke.Domain.Prices": "0.8.1",
+    "Lykke.Domain.Prices": "0.9.0",
     "Lykke.Common": "1.1.67"
   },
 

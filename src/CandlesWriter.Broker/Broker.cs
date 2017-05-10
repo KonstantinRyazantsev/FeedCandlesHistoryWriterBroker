@@ -7,7 +7,6 @@ using Autofac;
 using Common;
 using Common.Abstractions;
 using Common.Log;
-using Lykke.Domain.Prices.Repositories;
 using Lykke.Domain.Prices.Model;
 using Lykke.RabbitMqBroker.Subscriber;
 
@@ -16,13 +15,12 @@ using CandlesWriter.Core;
 
 namespace CandlesWriter.Broker
 {
-    public class Broker: TimerPeriod, IPersistent
+    public class Broker: TimerPeriod, IPersistent, IStopable
     {
-        private readonly static string COMPONENT_NAME = "FeedCandlesHistoryWriterBroker";
-
-        private RabbitMqSubscriber<Quote> subscriber;
-        private CandleGenerationController controller;
-        private ILog logger;
+        private readonly RabbitMqSubscriber<Quote> subscriber;
+        private readonly CandleGenerationController controller;
+        private readonly ILog logger;
+        private readonly string componentName;
 
         private ILifetimeScope scope;
         public ILifetimeScope Scope
@@ -40,10 +38,14 @@ namespace CandlesWriter.Broker
 
         public Broker(
             RabbitMqSubscriber<Quote> subscriber,
-            ILog logger)
-            : base("BrokerCandlesWriter", (int)TimeSpan.FromMinutes(1).TotalMilliseconds, logger)
+            ILog logger,
+            CandleGenerationController controller,
+            string componentName)
+            : base(componentName, (int)TimeSpan.FromMinutes(1).TotalMilliseconds, logger)
         {
+            this.componentName = componentName;
             this.logger = logger;
+            this.controller = controller;
             this.subscriber = subscriber;
 
             // Using default message reader strategy
@@ -51,31 +53,43 @@ namespace CandlesWriter.Broker
                   .SetMessageDeserializer(new MessageDeserializer())
                   .Subscribe(HandleMessage)
                   .SetLogger(logger);
-
-            this.controller = new CandleGenerationController(logger, COMPONENT_NAME);
         }
 
         private async Task HandleMessage(Quote quote)
         {
             if (quote != null)
             {
-                await this.controller.ConsumeQuote(quote);
+                await this.controller.HandleQuote(quote);
             }
             else
             {
-                await this.logger.WriteWarningAsync(COMPONENT_NAME, string.Empty, string.Empty, "Received quote <NULL>.");
+                await this.logger.WriteWarningAsync(this.componentName, string.Empty, string.Empty, "Received quote <NULL>.");
             }
+        }
+
+        public override void Start()
+        {
+            logger.WriteInfoAsync(this.componentName, "", "", "Starting broker").Wait();
+            base.Start();
+        }
+
+        public new void Stop()
+        {
+            logger.WriteInfoAsync(this.componentName, "", "", "Stopping broker").Wait();
+            base.Stop();
         }
 
         public override async Task Execute()
         {
-            await this.controller.Tick();
+            this.controller.Tick();
+            await Task.FromResult(0);
         }
 
         public async Task Save()
         {
             // Persist all remaining intervals
-            await this.controller.Tick();
+            this.controller.Tick();
+            await Task.FromResult(0);
         }
     }
 }

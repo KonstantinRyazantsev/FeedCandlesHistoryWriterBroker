@@ -16,6 +16,8 @@ namespace CandlesWriter.Broker
         {
             public RabbitMqSettings RabbitMq { get; set; } = new RabbitMqSettings();
             public ConnectionStringsSettings ConnectionStrings { get; set; } = new ConnectionStringsSettings();
+            public int QueueWarningSize { get; set; } = 10;
+            public string DictionaryTableName { get; set; }
         }
 
         public class RabbitMqSettings
@@ -24,14 +26,14 @@ namespace CandlesWriter.Broker
             public int Port { get; set; }
             public string Username { get; set; }
             public string Password { get; set; }
-            public string ExchangeOrderbook { get; set; }
             public string QuoteFeed { get; set; }
         }
 
         public class ConnectionStringsSettings
         {
-            public string HistoryConnectionString { get; set; }
             public string LogsConnectionString { get; set; }
+            public string DictsConnectionString { get; set; }
+            public IDictionary<string, string> AssetConnections { get; set; } = new Dictionary<string, string>();
         }
 
         public class SlackNotificationsSettings

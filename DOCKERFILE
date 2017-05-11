@@ -1,5 +1,7 @@
 FROM microsoft/dotnet:latest
-ENV BROKER_SETTINGS_URL http://server/key
+ARG SETTINGURL
+ARG SOURCEDIR
+ENV BROKER_SETTINGS_URL ${SETTINGURL}
 WORKDIR /brocker
-COPY src/CandlesWriter.Broker/bin/Release/PublishOutput/ .
+COPY ${SOURCEDIR} .
 ENTRYPOINT ["dotnet", "CandlesWriter.Broker.dll"]

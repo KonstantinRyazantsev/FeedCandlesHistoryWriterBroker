@@ -11,7 +11,11 @@
     },
     "emitEntryPoint": true
   },
-
+  "publishOptions": {
+    "include": [
+      "../../dockerfile"
+    ]
+  },
   "dependencies": {
     "Microsoft.NETCore.App": {
       "type": "platform",

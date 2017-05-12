@@ -1,7 +1,5 @@
 FROM microsoft/dotnet:latest
-ARG SETTINGURL
 ARG SOURCEDIR
-ENV BROKER_SETTINGS_URL ${SETTINGURL}
 WORKDIR /brocker
 COPY ${SOURCEDIR} .
 ENTRYPOINT ["dotnet", "CandlesWriter.Broker.dll"]

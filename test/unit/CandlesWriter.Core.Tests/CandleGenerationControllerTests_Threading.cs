@@ -33,14 +33,16 @@ namespace CandlesWriter.Core.Tests
             // Call Consume and Tick methods at the same time repeatedly and check that there was no exception.
             Task producing = Task.Run(async () =>
             {
-                while(!token.IsCancellationRequested)
+                while (!token.IsCancellationRequested)
                 {
-                    await controller.HandleQuote(new Quote() {
-                         AssetPair = "btcusd",
-                         IsBuy = true,
-                         Price = 100,
-                         Timestamp = DateTime.UtcNow
+                    await controller.HandleQuote(new Quote()
+                    {
+                        AssetPair = "btcusd",
+                        IsBuy = true,
+                        Price = 100,
+                        Timestamp = DateTime.UtcNow
                     });
+                    await Task.Delay(50);
                     Interlocked.Increment(ref consumeCalledTimes);
                 }
             }, token);
@@ -55,7 +57,7 @@ namespace CandlesWriter.Core.Tests
             }, token);
 
             Task.WaitAll(producing, timer);
-            
+
             Assert.True(consumeCalledTimes > 0);
             Assert.True(tickCalledTimes > 0);
             Assert.True(candlesRepo.Stored.Count > 0);

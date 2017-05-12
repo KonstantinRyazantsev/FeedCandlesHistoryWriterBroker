@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{0397A305-9A28-4701-9558-E87CB8FF1715}"
 EndProject
@@ -9,26 +9,25 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.gitmodules = .gitmodules
 		Dockerfile = Dockerfile
-		global.json = global.json
 	EndProjectSection
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "CandlesWriter.Broker", "src\CandlesWriter.Broker\CandlesWriter.Broker.xproj", "{6D03B17F-9DD6-4543-9EEC-BA07C97C1D02}"
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "CandlesWriter.Core", "src\CandlesWriter.Core\CandlesWriter.Core.xproj", "{7E64AFE5-FB0E-499F-831D-7106C720D330}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{A9EF469C-76C5-4EB7-BBFB-394E1C310782}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "unit", "unit", "{AE92CD52-A0EB-4ED2-B8BE-CD74E1959B01}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "CandlesWriter.Core.Tests", "test\unit\CandlesWriter.Core.Tests\CandlesWriter.Core.Tests.xproj", "{C7BFE994-8801-426B-89DF-6243BCC2D8EA}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "integration", "integration", "{1AB788AC-A979-474A-9390-EB90890D76FE}"
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "CandlesWriter.Core.IntTests", "test\integration\CandlesWriter.Core.IntTests\CandlesWriter.Core.IntTests.xproj", "{64188403-A870-4BCC-B85B-CFBD70C5E4DE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "submodules", "submodules", "{E5DDE00D-3A99-41FE-96CB-AC9ECF319B9C}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "AzureRepositories.Candles", "submodules\azurerepositories.candles\src\AzureRepositories.Candles\AzureRepositories.Candles.xproj", "{BC0C120B-30E2-4F30-9E20-73162E950A24}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CandlesWriter.Broker", "src\CandlesWriter.Broker\CandlesWriter.Broker.csproj", "{6D03B17F-9DD6-4543-9EEC-BA07C97C1D02}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CandlesWriter.Core", "src\CandlesWriter.Core\CandlesWriter.Core.csproj", "{7E64AFE5-FB0E-499F-831D-7106C720D330}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CandlesWriter.Core.Tests", "test\unit\CandlesWriter.Core.Tests\CandlesWriter.Core.Tests.csproj", "{C7BFE994-8801-426B-89DF-6243BCC2D8EA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CandlesWriter.Core.IntTests", "test\integration\CandlesWriter.Core.IntTests\CandlesWriter.Core.IntTests.csproj", "{64188403-A870-4BCC-B85B-CFBD70C5E4DE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureRepositories.Candles", "submodules\azurerepositories.candles\src\AzureRepositories.Candles\AzureRepositories.Candles.csproj", "{639DB615-2826-41F6-B4A1-67A5369EA9B2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -52,21 +51,21 @@ Global
 		{64188403-A870-4BCC-B85B-CFBD70C5E4DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64188403-A870-4BCC-B85B-CFBD70C5E4DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64188403-A870-4BCC-B85B-CFBD70C5E4DE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BC0C120B-30E2-4F30-9E20-73162E950A24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BC0C120B-30E2-4F30-9E20-73162E950A24}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BC0C120B-30E2-4F30-9E20-73162E950A24}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BC0C120B-30E2-4F30-9E20-73162E950A24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{639DB615-2826-41F6-B4A1-67A5369EA9B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{639DB615-2826-41F6-B4A1-67A5369EA9B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{639DB615-2826-41F6-B4A1-67A5369EA9B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{639DB615-2826-41F6-B4A1-67A5369EA9B2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{AE92CD52-A0EB-4ED2-B8BE-CD74E1959B01} = {A9EF469C-76C5-4EB7-BBFB-394E1C310782}
+		{1AB788AC-A979-474A-9390-EB90890D76FE} = {A9EF469C-76C5-4EB7-BBFB-394E1C310782}
 		{6D03B17F-9DD6-4543-9EEC-BA07C97C1D02} = {0397A305-9A28-4701-9558-E87CB8FF1715}
 		{7E64AFE5-FB0E-499F-831D-7106C720D330} = {0397A305-9A28-4701-9558-E87CB8FF1715}
-		{AE92CD52-A0EB-4ED2-B8BE-CD74E1959B01} = {A9EF469C-76C5-4EB7-BBFB-394E1C310782}
 		{C7BFE994-8801-426B-89DF-6243BCC2D8EA} = {AE92CD52-A0EB-4ED2-B8BE-CD74E1959B01}
-		{1AB788AC-A979-474A-9390-EB90890D76FE} = {A9EF469C-76C5-4EB7-BBFB-394E1C310782}
 		{64188403-A870-4BCC-B85B-CFBD70C5E4DE} = {1AB788AC-A979-474A-9390-EB90890D76FE}
-		{BC0C120B-30E2-4F30-9E20-73162E950A24} = {E5DDE00D-3A99-41FE-96CB-AC9ECF319B9C}
+		{639DB615-2826-41F6-B4A1-67A5369EA9B2} = {E5DDE00D-3A99-41FE-96CB-AC9ECF319B9C}
 	EndGlobalSection
 EndGlobal

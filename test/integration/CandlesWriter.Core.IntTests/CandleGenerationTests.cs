@@ -209,6 +209,7 @@ namespace CandlesWriter.Core.IntTests
             // ... signal controller to process quotes
             controller.Tick();
             Task.Delay(3000).Wait(); // Wait while produce task is finished.
+            Assert.Equal(0, controller.QueueLength);
         }
     }
 
@@ -238,10 +239,10 @@ namespace CandlesWriter.Core.IntTests
             this.assets = assets;
         }
 
-        public async Task<int> GetPrecision(string asset)
+        public Task<int> GetPrecision(string asset)
         {
             var assetPair = this.assets.Where(a => a.Id == asset).FirstOrDefault();
-            return assetPair != null ? assetPair.Accuracy : 5;
+            return Task.FromResult(assetPair != null ? assetPair.Accuracy : 5);
         }
     }
 }

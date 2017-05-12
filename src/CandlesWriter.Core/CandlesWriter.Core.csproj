@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp1.0</TargetFramework>
+    <AssemblyName>CandlesWriter.Core</AssemblyName>
+    <PackageId>CandlesWriter.Core</PackageId>
+    <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
+    <PackageTargetFallback>$(PackageTargetFallback);dnxcore50;portable-net451+win8</PackageTargetFallback>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\submodules\azurerepositories.candles\src\AzureRepositories.Candles\AzureRepositories.Candles.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lykke.Domain.Prices" Version="0.9.0" />
+    <PackageReference Include="Lykke.Common" Version="1.1.69" />
+  </ItemGroup>
+
+</Project>

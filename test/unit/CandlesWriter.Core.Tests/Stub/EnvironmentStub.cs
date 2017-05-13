@@ -14,10 +14,10 @@ namespace CandlesWriter.Core.Tests.Stub
             this.assets = assets;
         }
 
-        public async Task<int> GetPrecision(string asset)
+        public Task<int> GetPrecision(string asset)
         {
             var assetPair = this.assets.Where(a => a.Id == asset).FirstOrDefault();
-            return assetPair != null ? assetPair.Accuracy : 5;
+            return Task.FromResult(assetPair != null ? assetPair.Accuracy : 5);
         }
     }
 }

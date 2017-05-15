@@ -239,7 +239,7 @@ namespace CandlesWriter.Core
                 {
                     // Continue if did not found connection string for an asset
                     await Utils.ThrottleActionAsync(ex.Message,
-                        async () => await this.log.WriteErrorAsync(componentName, PROCESS, "", ex));
+                        async () => await this.log.WriteInfoAsync(componentName, PROCESS, "", ex.Message));
                 }
             }
             finally

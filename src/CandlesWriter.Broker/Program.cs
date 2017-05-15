@@ -72,8 +72,8 @@ namespace CandlesWriter.Broker
         {
             var settings = url.GetJsonAsync<AppSettings>().Result;
             // Ignore case for asset keys:
-            var origConnections = settings.FeedCandlesHistoryWriterBroker.ConnectionStrings.AssetConnections;
-            settings.FeedCandlesHistoryWriterBroker.ConnectionStrings.AssetConnections =
+            var origConnections = settings.CandleHistoryAssetConnections;
+            settings.CandleHistoryAssetConnections = 
                 new Dictionary<string, string>(origConnections, StringComparer.OrdinalIgnoreCase);
             return settings;
         }

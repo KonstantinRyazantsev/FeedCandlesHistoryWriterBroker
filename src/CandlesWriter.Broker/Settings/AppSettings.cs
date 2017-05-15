@@ -11,6 +11,7 @@ namespace CandlesWriter.Broker
     {
         public SlackNotificationsSettings SlackNotifications { get; set; } = new SlackNotificationsSettings();
         public FeedCandlesHistoryWriterBrokerSettings FeedCandlesHistoryWriterBroker { get; set; } = new FeedCandlesHistoryWriterBrokerSettings();
+        public IDictionary<string, string> CandleHistoryAssetConnections { get; set; } = new Dictionary<string, string>();
 
         public class FeedCandlesHistoryWriterBrokerSettings
         {
@@ -33,7 +34,6 @@ namespace CandlesWriter.Broker
         {
             public string LogsConnectionString { get; set; }
             public string DictsConnectionString { get; set; }
-            public IDictionary<string, string> AssetConnections { get; set; } = new Dictionary<string, string>();
         }
 
         public class SlackNotificationsSettings

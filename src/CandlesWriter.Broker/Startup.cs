@@ -56,7 +56,7 @@ namespace CandlesWriter.Broker
 
             builder.Register(c => new CandleHistoryRepositoryResolver((asset, tableName) => {
                     string connString;
-                    if (!settings.FeedCandlesHistoryWriterBroker.ConnectionStrings.AssetConnections.TryGetValue(asset, out connString) 
+                    if (!settings.CandleHistoryAssetConnections.TryGetValue(asset, out connString) 
                         || string.IsNullOrEmpty(connString))
                     {
                         throw new AppSettingException(string.Format("Connection string for asset pair '{0}' is not specified.", asset));

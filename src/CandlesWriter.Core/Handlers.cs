@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Lykke.Domain.Prices.Contracts;
 using Lykke.Domain.Prices.Model;
 using Lykke.Domain.Prices;
+using Common.Log;
 
 namespace CandlesWriter.Core
 {
@@ -22,6 +23,38 @@ namespace CandlesWriter.Core
             if (_next != null)
             {
                 await _next.Handle(quote, output);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Filters incoming assets based on whether they exist in dictanary or not.
+    /// </summary>
+    public class FilterHandler : QuoteHandler
+    {
+        private IEnvironment env;
+        private ILog log;
+
+        public FilterHandler(IEnvironment env, ILog log, QuoteHandler next)
+            : base(next)
+        {
+            this.env = env;
+            this.log = log;
+        }
+
+        public override async Task Handle(QuoteExt quote, Queue<QuoteExt> output)
+        {
+            // If asset dictionary does not contain asset, then ignore this quote.
+            var assetPair = await this.env.GetAssetPair(quote.AssetPair);
+            if (assetPair != null)
+            {
+                await base.Handle(quote, output);
+            }
+            else
+            {
+#if DEBUG
+                await this.log.WriteInfoAsync("FeedCandlesHistoryWriterBroker", "", "", "Ignoring incoming asset " + quote.AssetPair);
+#endif
             }
         }
     }
@@ -94,15 +127,16 @@ namespace CandlesWriter.Core
             this.ask.TryGetValue(assetKey, out currentAsk);
             this.bid.TryGetValue(assetKey, out currentBid);
 
-            int precision = await this.env.GetPrecision(asset);
+            var assetPair = await this.env.GetAssetPair(asset);
 
             QuoteExt mid = null;
-            if (currentAsk != null && currentBid != null)
+            // If asset dictionary does not contain asset, ignore it.
+            if (assetPair != null && currentAsk != null && currentBid != null)
             {
                 mid = new QuoteExt()
                 {
                     AssetPair = asset,
-                    Price = Math.Round((currentAsk.Price + currentBid.Price) / 2, precision),
+                    Price = Math.Round((currentAsk.Price + currentBid.Price) / 2, assetPair.Accuracy),
                     // Controller ensures that both dates are in UTC
                     Timestamp = DateTime.Compare(currentAsk.Timestamp, currentBid.Timestamp) >= 0 ? currentAsk.Timestamp : currentBid.Timestamp,
                     PriceType = PriceType.Mid

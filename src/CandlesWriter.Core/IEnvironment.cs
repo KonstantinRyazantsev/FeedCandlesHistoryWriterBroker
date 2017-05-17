@@ -10,6 +10,6 @@ namespace CandlesWriter.Core
     /// </summary>
     public interface IEnvironment
     {
-        Task<int> GetPrecision(string asset);
+        Task<IAssetPair> GetAssetPair(string asset);
     }
 }

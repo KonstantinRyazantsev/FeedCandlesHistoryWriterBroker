@@ -52,7 +52,7 @@ namespace CandlesWriter.Core.IntTests
             ProcessAllQuotes(quotes, repo, logger);
 
             // ... check for errors
-            Assert.Equal(1, logger.Log.Where(rec => rec.Severity != LoggerStub.Severity.Info).Count());
+            Assert.Equal(0, logger.Log.Where(rec => rec.Severity != LoggerStub.Severity.Info).Count());
 
             // 3. Read candles with repository and check count of generated candles
             //
@@ -239,10 +239,9 @@ namespace CandlesWriter.Core.IntTests
             this.assets = assets;
         }
 
-        public Task<int> GetPrecision(string asset)
+        public Task<IAssetPair> GetAssetPair(string asset)
         {
-            var assetPair = this.assets.Where(a => a.Id == asset).FirstOrDefault();
-            return Task.FromResult(assetPair != null ? assetPair.Accuracy : 5);
+            return Task.FromResult(this.assets.Where(a => a.Id == asset).FirstOrDefault() as IAssetPair);
         }
     }
 }

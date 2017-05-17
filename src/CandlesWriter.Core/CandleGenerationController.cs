@@ -83,8 +83,9 @@ namespace CandlesWriter.Core
             this.log = log;
             this.componentName = componentName;
             // Build handles chain
-            this.handler = new MidHandler(env,
-                new DefaultHandler(null));
+            this.handler = new FilterHandler(env, log,
+                                new MidHandler(env,
+                                    new DefaultHandler(null)));
         }
 
         public CandleGenerationController(ICandleHistoryRepository candlesRepo, ILog logger, string componentName, IEnvironment env)
@@ -235,11 +236,12 @@ namespace CandlesWriter.Core
                 {
                     await all;
                 }
-                catch (AppSettingException ex)
+                catch (Exception)
                 {
-                    // Continue if did not found connection string for an asset
-                    await Utils.ThrottleActionAsync(ex.Message,
-                        async () => await this.log.WriteInfoAsync(componentName, PROCESS, "", ex.Message));
+                    foreach (var failedTask in tasks.Where(t => t.Exception != null))
+                    {
+                        await LogException(failedTask.Exception);
+                    }
                 }
             }
             finally
@@ -283,6 +285,40 @@ namespace CandlesWriter.Core
             {
                 var data = candleGenerator.Generate(quotes, interval, type);
                 await repo.InsertOrMergeAsync(data, asset, interval, type);
+            }
+        }
+
+        private async Task LogException(Exception ex)
+        {
+            // Ignore exceptions for not configured connection strings.
+            // Log any other exceptions.
+
+            var aggr = ex as AggregateException;
+            if (aggr != null)
+            {
+                foreach (var innerex in aggr.InnerExceptions)
+                {
+                    if (innerex is AppSettingException)
+                    {
+#if DEBUG
+                        await this.log.WriteInfoAsync(this.componentName, "", "", "Ignoring incoming asset: " + ex.Message);
+#endif
+                    }
+                    else
+                    {
+                        await this.log.WriteErrorAsync(this.componentName, "", "", ex);
+                    }
+                }
+            }
+            else if (ex is AppSettingException)
+            {
+#if DEBUG
+                await this.log.WriteInfoAsync(this.componentName, "", "", "Ignoring incoming asset: " + ex.Message);
+#endif
+            }
+            else
+            {
+                await this.log.WriteErrorAsync(this.componentName, "", "", ex);
             }
         }
 

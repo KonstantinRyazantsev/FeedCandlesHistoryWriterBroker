@@ -26,23 +26,17 @@ namespace CandlesWriter.Broker
             this.componentName = componentName;
         }
 
-        public async Task<int> GetPrecision(string asset)
+        public async Task<IAssetPair> GetAssetPair(string asset)
         {
             // Try to find asset
             var assetPair = this.pairs.Where(pair => string.Compare(pair.Id, asset, true) == 0).FirstOrDefault();
-            if (assetPair == null) {
+            if (assetPair == null)
+            {
                 await UpdateDictionary();
                 // Try read one more time
                 assetPair = this.pairs.Where(pair => string.Compare(pair.Id, asset, true) == 0).FirstOrDefault();
-
-                if (assetPair == null)
-                {
-                    var message = string.Format("Cannot get accuracy for asset={0}. Dictionary does not contain asset.", asset);
-                    await Utils.ThrottleActionAsync(message, async () => 
-                        await this.log.WriteErrorAsync(this.componentName, "", "", new InvalidOperationException(message)));
-                }
             }
-            return assetPair != null ? assetPair.Accuracy : DEFAULT_PRECISION;
+            return assetPair;
         }
 
         private async Task UpdateDictionary()

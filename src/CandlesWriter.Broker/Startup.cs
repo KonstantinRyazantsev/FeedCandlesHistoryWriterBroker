@@ -55,15 +55,18 @@ namespace CandlesWriter.Broker
             this.broker = new Broker(subscriber, log, this.controller, ApplicationName);
 
             builder.Register(c => new CandleHistoryRepositoryResolver((asset, tableName) => {
-                    string connString;
-                    if (!settings.CandleHistoryAssetConnections.TryGetValue(asset, out connString) 
-                        || string.IsNullOrEmpty(connString))
-                    {
-                        throw new AppSettingException(string.Format("Connection string for asset pair '{0}' is not specified.", asset));
-                    }
+                string connString;
+                if (!settings.CandleHistoryAssetConnections.TryGetValue(asset, out connString) 
+                    || string.IsNullOrEmpty(connString))
+                {
+                    throw new AppSettingException(string.Format("Connection string for asset pair '{0}' is not specified.", asset));
+                }
 
-                    return new AzureTableStorage<CandleTableEntity>(connString, tableName, log);
-                })).As<ICandleHistoryRepository>();
+                var storage = new AzureTableStorage<CandleTableEntity>(connString, tableName, log);
+                // Preload table info
+                var res = storage.GetDataAsync("ask", "1900-01-01").Result;
+                return storage;
+            })).As<ICandleHistoryRepository>();
 
             builder.RegisterInstance(subscriber)
                 .As<IStartable>()

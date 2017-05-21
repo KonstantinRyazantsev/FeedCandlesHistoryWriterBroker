@@ -113,6 +113,29 @@ namespace CandlesWriter.Core.Tests
             Assert.True(candles[1].IsEqual(new FeedCandle() { Open = 3, Close = 3, High = 3, Low = 3, IsBuy = true, DateTime = dt.AddSeconds(5) }));
             Assert.True(candles[2].IsEqual(new FeedCandle() { Open = 4, Close = 6, High = 6, Low = 4, IsBuy = true, DateTime = dt.AddSeconds(15) }));
         }
+
+        [Fact]
+        public void MinutesCandlesAreGrouped()
+        {
+            DateTime dt = new DateTime(2017, 1, 1);
+
+            var quotes = new QuoteExt[]
+            {
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 1, Timestamp = dt, PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 2, Timestamp = dt.AddMinutes(1), PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 3, Timestamp = dt.AddMinutes(2), PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 4, Timestamp = dt.AddMinutes(3), PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 5, Timestamp = dt.AddMinutes(4), PriceType = PriceType.Bid },
+                new QuoteExt { AssetPair = "BTCUSD", IsBuy = true, Price = 6, Timestamp = dt.AddMinutes(5), PriceType = PriceType.Bid }
+            };
+
+            var candles = new CandleGenerator().Generate(quotes, TimeInterval.Sec, PriceType.Bid).ToArray();
+
+            Assert.Equal(6, candles.Length);
+            Assert.True(candles[0].IsEqual(new FeedCandle() { Open = 1, Close = 1, High = 1, Low = 1, IsBuy = true, DateTime = dt }));
+            Assert.True(candles[1].IsEqual(new FeedCandle() { Open = 2, Close = 2, High = 2, Low = 2, IsBuy = true, DateTime = dt.AddMinutes(1) }));
+            Assert.True(candles[2].IsEqual(new FeedCandle() { Open = 3, Close = 3, High = 3, Low =3, IsBuy = true, DateTime = dt.AddMinutes(2) }));
+        }
     }
 
     internal static class CandleExtensions

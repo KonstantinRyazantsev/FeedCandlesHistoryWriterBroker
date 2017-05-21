@@ -284,8 +284,38 @@ namespace CandlesWriter.Core
             foreach (var type in REQUIRED_TYPES)
             {
                 var data = candleGenerator.Generate(quotes, interval, type);
-                await repo.InsertOrMergeAsync(data, asset, interval, type);
+                await Retry(() =>
+                {
+                    return repo.InsertOrMergeAsync(data, asset, interval, type);
+                });
             }
+        }
+
+        private async Task Retry(Func<Task> syncAction)
+        {
+            int retryDelaySec = 3;
+            int retryCount = 3;
+            while (retryCount > 0)
+            {
+                try
+                {
+                    await syncAction();
+                    return;
+                }
+                catch(AppSettingException)
+                {
+                    // Do not retry on configuration exceptions
+                    throw;
+                }
+                catch(Exception ex)
+                {
+                    await log.WriteWarningAsync(this.componentName, "Inserting", "", 
+                        $"Retrying insert candles in {retryDelaySec} second after received exception: {ex.Message}");
+                    await Task.Delay((int)TimeSpan.FromSeconds(retryDelaySec).TotalMilliseconds);
+                    retryCount--;
+                }
+            }
+            await syncAction();
         }
 
         private async Task LogException(Exception ex)

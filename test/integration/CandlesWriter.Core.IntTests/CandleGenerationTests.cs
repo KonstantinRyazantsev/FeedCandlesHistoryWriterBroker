@@ -101,6 +101,45 @@ namespace CandlesWriter.Core.IntTests
         }
 
         [Fact]
+        public void CheckMinutesGeneration()
+        {
+            var logger = new LoggerStub();
+            var repo = new CandleHistoryRepositoryResolver((string asset, string tableName) =>
+            {
+                return CreateStorage<CandleTableEntity>(asset, tableName, logger);
+            });
+
+            DateTime dt = new DateTime(2017, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            const string asset1 = "btcusd";
+
+            // 1. Prepare incoming quotes
+            //
+            IEnumerable<Quote> quotes = new Quote[]
+            {
+                // Asset 1
+                new Quote() { AssetPair = asset1, IsBuy = true, Price = 1, Timestamp = dt },                              // Second 1 // Day 1
+                new Quote() { AssetPair = asset1, IsBuy = true, Price = 2, Timestamp = dt.AddMinutes(1) },
+                new Quote() { AssetPair = asset1, IsBuy = true, Price = 3, Timestamp = dt.AddMinutes(2) },                // Second 2
+                new Quote() { AssetPair = asset1, IsBuy = true, Price = 4, Timestamp = dt.AddMinutes(3) },                // Second 2
+                new Quote() { AssetPair = asset1, IsBuy = true, Price = 5, Timestamp = dt.AddMinutes(4) },              // Second 3
+            };
+
+            // 2. Process incoming quotes
+            //
+            ProcessAllQuotes(quotes, repo, logger);
+
+            // ... check for errors
+            Assert.Equal(0, logger.Log.Where(rec => rec.Severity != LoggerStub.Severity.Info).Count());
+
+            // 3. Read candles with repository and check count of generated candles
+            //
+            CheckCountGenerated(repo, dt.AddDays(-1), dt.AddDays(1), new[] {
+                new { Asset = asset1, Interval = TimeInterval.Sec, PriceType = PriceType.Bid, CountExpected = 5 },
+                new { Asset = asset1, Interval = TimeInterval.Minute, PriceType = PriceType.Bid, CountExpected = 5 }
+            });
+        }
+
+        [Fact]
         public void CandlesAreInsertedAndMerged()
         {
             var logger = new LoggerStub();
@@ -208,7 +247,17 @@ namespace CandlesWriter.Core.IntTests
 
             // ... signal controller to process quotes
             controller.Tick();
-            Task.Delay(3000).Wait(); // Wait while produce task is finished.
+
+            int counter = 0;
+            while (counter < 5)
+            {
+                Task.Delay(1000).Wait(); // Wait while produce task is finished.
+                if (controller.QueueLength == 0)
+                {
+                    break;
+                }
+                counter++;
+            }
             Assert.Equal(0, controller.QueueLength);
         }
     }

@@ -64,7 +64,7 @@ namespace CandlesWriter.Broker
 
                 var storage = new AzureTableStorage<CandleTableEntity>(connString, tableName, log);
                 // Preload table info
-                var res = storage.GetDataAsync("ask", "1900-01-01").Result;
+                var res = storage.GetDataAsync(asset, "1900-01-01").Result;
                 return storage;
             })).As<ICandleHistoryRepository>();
 

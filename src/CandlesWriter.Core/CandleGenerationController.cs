@@ -234,7 +234,7 @@ namespace CandlesWriter.Core
                 var tasks = new List<Task>();
                 foreach (var group in assetGroups)
                 {
-                    tasks.AddRange(ProcessQuotesForAsset(repo, group, group.Key));
+                    tasks.Add(ProcessQuotesForAsset(repo, group, group.Key));
                 }
 
                 var all = Task.WhenAll(tasks);
@@ -266,21 +266,17 @@ namespace CandlesWriter.Core
             }
         }
 
-        private List<Task> ProcessQuotesForAsset(ICandleHistoryRepository repo, IEnumerable<QuoteExt> quotes, string asset)
+        private async Task ProcessQuotesForAsset(ICandleHistoryRepository repo, IEnumerable<QuoteExt> quotes, string asset)
         {
-            var tasks = new List<Task>();
-
             if (quotes.Count() != 0)
             {
                 // For each asset and interval generate candles from quotes and write them to storage.
                 //
                 foreach (var interval in REQUIRED_INTERVALS)
                 {
-                    tasks.Add(this.Insert(repo, quotes, asset, interval));
+                    await this.Insert(repo, quotes, asset, interval);
                 }
             }
-
-            return tasks;
         }
 
         private async Task Insert(ICandleHistoryRepository repo, IEnumerable<QuoteExt> quotes, string asset, TimeInterval interval)

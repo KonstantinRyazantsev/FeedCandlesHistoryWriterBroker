@@ -170,8 +170,14 @@ namespace CandlesWriter.Core
 #if DEBUG
             await this.log.WriteInfoAsync(this.componentName, "", "", "Consuming task. Amount of tasks in queue=" + this.queueLength);
 #endif
-            await t;
-            Interlocked.Decrement(ref this.queueLength);
+            try
+            {
+                await t;
+            }
+            finally
+            {
+                Interlocked.Decrement(ref this.queueLength);
+            }
 #if DEBUG
             await this.log.WriteInfoAsync(this.componentName, "", "", "Task is finished. Amount of tasks in queue=" + this.queueLength);
 #endif

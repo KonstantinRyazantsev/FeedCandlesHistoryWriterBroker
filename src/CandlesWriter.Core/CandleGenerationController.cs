@@ -234,7 +234,7 @@ namespace CandlesWriter.Core
                 var tasks = new List<Task>();
                 foreach (var group in assetGroups)
                 {
-                    tasks.Add(ProcessQuotesForAsset(repo, group, group.Key));
+                    tasks.Add(ProcessQuotesForAsset(repo, group.ToArray(), group.Key));
                 }
 
                 var all = Task.WhenAll(tasks);
@@ -266,7 +266,7 @@ namespace CandlesWriter.Core
             }
         }
 
-        private async Task ProcessQuotesForAsset(ICandleHistoryRepository repo, IEnumerable<QuoteExt> quotes, string asset)
+        private async Task ProcessQuotesForAsset(ICandleHistoryRepository repo, IReadOnlyCollection<QuoteExt> quotes, string asset)
         {
             if (quotes.Count() != 0)
             {
@@ -279,7 +279,7 @@ namespace CandlesWriter.Core
             }
         }
 
-        private async Task Insert(ICandleHistoryRepository repo, IEnumerable<QuoteExt> quotes, string asset, TimeInterval interval)
+        private async Task Insert(ICandleHistoryRepository repo, IReadOnlyCollection<QuoteExt> quotes, string asset, TimeInterval interval)
         {
             CandleGenerator candleGenerator = new CandleGenerator();
 

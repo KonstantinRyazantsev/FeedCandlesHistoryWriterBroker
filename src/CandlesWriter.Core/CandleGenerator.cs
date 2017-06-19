@@ -10,7 +10,7 @@ namespace CandlesWriter.Core
 {
     public sealed class CandleGenerator
     {
-        public IEnumerable<IFeedCandle> Generate(IEnumerable<QuoteExt> quotes, TimeInterval interval, PriceType priceType)
+        public IEnumerable<IFeedCandle> Generate(IReadOnlyCollection<QuoteExt> quotes, TimeInterval interval, PriceType priceType)
         {
             List<IFeedCandle> result = new List<IFeedCandle>();
 
@@ -22,7 +22,7 @@ namespace CandlesWriter.Core
             return result;
         }
 
-        private IEnumerable<IFeedCandle> ConvertToCandles(IEnumerable<QuoteExt> quotes, TimeInterval interval, PriceType priceType)
+        private static IEnumerable<IFeedCandle> ConvertToCandles(IReadOnlyCollection<QuoteExt> quotes, TimeInterval interval, PriceType priceType)
         {
             IEnumerable<Quote> filtered;
             switch (priceType)
@@ -40,15 +40,9 @@ namespace CandlesWriter.Core
                     throw new InvalidOperationException(string.Format("Unexpected price type value '{0}'", priceType));
             }
 
-            var list = filtered.ToList();
-
-            IEnumerable<IFeedCandle> candles = filtered
+            return filtered
                 .GroupBy(quote => quote.Timestamp.RoundTo(interval))
                 .Select(group => group.ToCandle(group.Key));
-
-            var res = candles.ToList();
-
-            return candles;
         }
     }
 }
